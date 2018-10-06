@@ -1,7 +1,7 @@
 Package: levi
 Type: Package
 Title: Landscape Expression Visualization Interface
-Version: 0.99.0
+Version: 0.99.01
 Author: Jose Rafael Pilan <rafael.pilan@unesp.br>, Agnes Alessandra Sekijima Takeda <agnes.takeda@unesp.br>, Jose Luiz Rybarczyk Filho <jose.luiz@unesp.br>
 Maintainer: Jose Luiz Rybarczyk Filho <jose.luiz@unesp.br>
 Description: The tool integrates data from biological networks with transcriptomes, displaying a heatmap with surface curves to evidence the altered regions.
