@@ -75,22 +75,6 @@ associations from online repositories:
 |   stg    | STRING / STITCH | [Example interactions](https://bit.ly/2J2OToH)|
 
 
-The Figure 1 shows the biological network for citrate cycle (map00020 from 
-KEGG database), which was built using the STRING database. We used "Experiments" 
-and "Database" as interaction sources an a  confidence score of 0.400 (medium 
-confidence ). From the output, we used four different tools to build the 
-network layout to the citrate cycle. We applied **levi** using the expression 
-file (see [Example](https://bit.ly/2KSBaOo)) 
-of the comparison "TumorCurrentSmoker-NormalNeverSmoker"
-
-<center><img src="network.png" width="1000"></center>
-<center> <b>Figure 1: </b> Examples of the **landscapes** obtained by **levi** for citrate cycle network and the expression file ([Example](https://bit.ly/2KSBaOo)) of the comparison "TumorCurrentSmoker-NormalNeverSmoker". The networks were built using the tools: **(A)** Medusa, **(B)** RedeR, **(C)** Pajek e **(D)** STRING.
-</center>
-
-
-
-
-
 #Viewing Modes
 
 **levi** has two viewing modes: **Graphical User Interface (GUI)** 
@@ -98,7 +82,7 @@ and **script**.
 
 ## Graphical User Interface (GUI)
 
-The GUI mode was developed using Shiny package (Figure 2).  This viewing mode
+The GUI mode was developed using Shiny package (Figure 1).  This viewing mode
 can be used in the R environment (browser=FALSE) or in the user's default 
 operating system browser (browser=TRUE).
 
@@ -110,7 +94,7 @@ LEVIui(browser=FALSE) #Launch Levi to R environment.
 ```
 
 <center><img src="levi.png" width=100%></center>
-<center> <b>Figure 2: </b> Graphical User Interface (GUI).</center>
+<center> <b>Figure 1: </b> Graphical User Interface (GUI).</center>
 
 * **1** - **Tabs**
     + **File** - General options for uploading the data files.
@@ -157,17 +141,6 @@ area in the **landscape**. The user can save the table in a csv file
     the total time required will be longer.
     + **Zoom** - Zoom value for the **landscape**. The variable range is 
     1 to 100. The default value is 50.
-
-
-<center><img src="color01.png" width=200%></center>
-<center> <b>Figure 3: </b> Color palette to the landscape using contour lines. 
-**(A)** Default, **(B)** Terrain, **(C)** Rainbow, **(D)** Heat, **(E)** Topo e **(F)** CM. </center>
-
-
-<center><img src="color02.png" width="1500"></center>
-<center> <b>Figure 4: </b> Color palette to  the landscape without contour
-lines. **(A)** Default, **(B)** Terrain, **(C)** Rainbow, **(D)** Heat, **(E)** Topo e **(F)** CM. 
-</center>
 
 ## *Script*
 
@@ -217,6 +190,8 @@ landscape <- levi(networkNodesInput = template_network,
                     zoomValueInput = 50, smoothValueInput = 50, 
                     contourLevi = FALSE)
 ```
+
+Visit the [levi homepage](http://www.biocomplexitylab.net/en/softwares/levi/) to check more information about the package
 
 
 # Session information
