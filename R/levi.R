@@ -21,8 +21,9 @@
 #' @importFrom dplyr arrange %>% filter
 #' @importFrom DT datatable dataTableOutput renderDataTable
 #' @importFrom igraph graph.edgelist as_long_data_frame
-#' @usage levi(expressionInput, fileTypeInput, networkNodesInput,
-#' networkEdgesInput, geneSymbolnput, readExpColumn,
+#' @importFrom methods is
+#' @usage levi(expressionInput, fileTypeInput, networkCoordinatesInput,
+#' networkInteractionsInput, geneSymbolnput, readExpColumn,
 #' contrastValueInput, zoomValueInput, resolutionValueInput,
 #' smoothValueInput, expressionLog, contourLevi, setcolor)
 #' @description This is the Levi script mode. It allows you to create the
@@ -34,11 +35,10 @@
 #' @param fileTypeInput Filename of biological network. Levi can read files
 #' written in the following formats: Medusa (DAT), RedeR (DYN), Pajek (NET)
 #' and STRING/STITCH
-#' @param networkNodesInput Parameter available only to STRING/STITCH data
-#' format.
-#' It allows the user to load the coordinate of the nodes the network.
-#' @param networkEdgesInput Parameter available only to STRING/STITCH data
-#' format.
+#' @param networkCoordinatesInput It allows the user to load the coordinate
+#' of the nodes the network.
+#' @param networkInteractionsInput Parameter available only to
+#' STRING/STITCH data format.
 #' It allows the user to load the interaction data file of the network.
 #' @param geneSymbolnput Column name from gene expression data containing the
 #' identifier (gene Symbol, Entrez ID, EMSEMBL, etc).
@@ -61,13 +61,13 @@
 #' @details Integrates the biological network and gene expression levels
 #' (or other type of data)
 #' @author José Rafael Pilan (rafael.pilan@unesp.br)
-#' @return Return a image (heatmat).
+#' @return Return a ggplot object and print a image (heatmat).
 #' @examples
 #'template_network <- file.path(system.file(package="levi"),"extdata",
 #'    "medusa.dat", fsep = .Platform$file.sep)
 #'template_expression <- file.path(system.file(package="levi"),
 #'    "extdata","expression.dat", fsep = .Platform$file.sep)
-#'landscape <- levi(networkNodesInput = template_network,
+#'landscape <- levi(networkCoordinatesInput = template_network,
 #'    expressionInput = template_expression, fileTypeInput = "dat",
 #'    geneSymbolnput = "ID",
 #'    readExpColumn=readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"),
@@ -75,12 +75,13 @@
 #'    smoothValueInput = 50, expressionLog = FALSE, contourLevi = TRUE,
 #'    setcolor = "default")
 #'@export
-levi <- function(expressionInput, fileTypeInput, networkNodesInput,
-    networkEdgesInput, geneSymbolnput, readExpColumn, contrastValueInput,
-    zoomValueInput, resolutionValueInput, smoothValueInput, expressionLog,
-    contourLevi, setcolor){
-        levi_function(expressionInput, fileTypeInput, networkNodesInput,
-            networkEdgesInput, geneSymbolnput, readExpColumn,
+levi <- function(expressionInput, fileTypeInput, networkCoordinatesInput,
+    networkInteractionsInput = NA, geneSymbolnput, readExpColumn,
+    contrastValueInput = 50, zoomValueInput = 50, resolutionValueInput = 50,
+    smoothValueInput = 50, expressionLog = FALSE,
+    contourLevi  = FALSE, setcolor = "default"){
+        levi_function(expressionInput, fileTypeInput, networkCoordinatesInput,
+            networkInteractionsInput, geneSymbolnput, readExpColumn,
             contrastValueInput, zoomValueInput, resolutionValueInput,
             smoothValueInput, expressionLog, contourLevi, setcolor)
 

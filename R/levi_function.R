@@ -1,75 +1,68 @@
 levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
-                          networkEdgesInput, geneSymbolnput, readExpColumn,
-                          contrastValueInput,zoomValueInput,
-                          resolutionValueInput, smoothValueInput, expressionLog,
-                          contourLevi, setcolor){
+    networkInteractionsInput, geneSymbolnput, readExpColumn, contrastValueInput,
+    zoomValueInput, resolutionValueInput, smoothValueInput, expressionLog,
+    contourLevi, setcolor){
 
-    if (missing(setcolor)) {setcolor <- "default"}
+    colorSet <- function(x, colorType=c("default", "terrain", "rainbow",
+    "heat", "topo", "cm")){
+        colorType <- match.arg(colorType)
+        defaultColors <- function(n) {
+        c("#180052", "#0c0083","#0000b4", "#0000e4","#0010ff", "#0041ff",
+        "#0072ff", "#00A3FF", "#00D4FF", "#00FF49","#5AFF00", "#FFE400",
+        "#FFC400", "#FFA300", "#FF8300", "#FF6200", "#FF4100", "#FF2100",
+        "#FF0000", "#E40000")
+        }
+        color_list <- list(
+            default = defaultColors,
+            terrain = terrain.colors,
+            rainbow = rainbow,
+            heat = heat.colors,
+            topo = topo.colors,
+            cm = cm.colors
+        )
+        colorSetRange <- color_list[[colorType]](20)
 
-    if (setcolor == "default"){colorSet <- c("#180052", "#0c0083","#0000b4",
-        "#0000e4","#0010ff", "#0041ff", "#0072ff", "#00A3FF", "#00D4FF",
-        "#00FF49","#5AFF00", "#FFE400", "#FFC400", "#FFA300", "#FF8300",
-        "#FF6200", "#FF4100", "#FF2100", "#FF0000", "#E40000")}
-    else
-        if (setcolor == "terrain"){colorSet <- terrain.colors(n = 20)}
-        else
-            if (setcolor == "rainbow"){colorSet <- rainbow(n = 20)}
-            else
-                if (setcolor == "heat"){colorSet <- heat.colors(n = 20)}
-                else
-                    if (setcolor == "topo"){colorSet <-
-                        topo.colors(n = 20)}
-                    else
-                        if (setcolor == "cm"){colorSet <-
-                            cm.colors(n = 20)}
-                        else
-                            {print("Incorrect color name.")
-                                stop()}
+        return(colorSetRange)
+    }
+
+    fileTypeFun <- function(x, filecheck=c("dat", "dyn", "stg", "net")){
+        filecheck <- match.arg(filecheck)
+
+        return(filecheck)
+    }
+
+    fileType <- fileTypeFun(x, fileTypeInput)
 
 
-
-
-    for (i in seq(2,length(readExpColumn))) {
+    for (k in seq(2,length(readExpColumn))) {
 
         columnComb<- do.call('rbind',
-            strsplit(as.character(readExpColumn[i]),'-',
+            strsplit(as.character(readExpColumn[k]),'-',
             fixed=TRUE))
-
-            if (missing(networkEdgesInput)) {networkEdgesInput <- NA}
-
-            if (missing(expressionLog)) {expressionLog <- FALSE}
 
             #Configuration of contrast, resolution, smothing and zoom
             #contrast
-            if (missing(contrastValueInput)) {contrastValue <- 50}
-            else
-                {contrastValue <- contrastValueInput}
+            {contrastValue <- contrastValueInput}
             if (contrastValue < 0) {contrastValue <- 0}
             if (contrastValue > 100) {contrastValue <- 99}
             contrastValue<-(contrastValue/100)
             contrastValue<-0.1-(0.1*contrastValue)
 
             #resolution
-            if (missing(resolutionValueInput)) {resolutionValue <- 50}
-            else
-                {resolutionValue <- resolutionValueInput}
+            {resolutionValue <- resolutionValueInput}
             if (resolutionValue > 100) {resolutionValue <- 100}
             if (resolutionValue < 1) {resolutionValue <- 1}
             resolutionValue<-as.integer((resolutionValue/100)*210+30)
 
             #zoom
-            if (missing(zoomValueInput)) {zoomValue <- 50}
-            else
-                {zoomValue <- zoomValueInput}
+            {zoomValue <- zoomValueInput}
             if (zoomValue < 0) {zoomValue <- 0}
             if (zoomValue > 100) {zoomValue <- 100}
             zoomValue<-(zoomValue/100)
             zoomValue<-(0.2*zoomValue)-0.2
 
             #smothing
-            if (missing(smoothValueInput)) {smoothValue <- 50}
-            else
-                {smoothValue <- smoothValueInput}
+            {smoothValue <- smoothValueInput}
             smoothValue=(smoothValue/100)*18
             smoothValue=as.integer(smoothValue)
             if (smoothValue <= 0) {smoothValue <- 1}
@@ -82,15 +75,14 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
 
             nameBase <- expressionInput
             networkNodes<- networkNodesInput
-            networkEdges <- networkEdgesInput
+            networkEdges <- networkInteractionsInput
             geneSymbol<- geneSymbolnput
             baseTest<- columnComb[,1]
             baseControl<- columnComb[,2]
-            fileType <- fileTypeInput
+
 
         switch(fileType,
                 dat={
-                    tryCatch({
 
                     networkNodes <- read.delim(file = networkNodes,
                     header = FALSE, sep = "\t",
@@ -105,19 +97,9 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                     edges <- edges[,c(1,2)]
                     nodes <- slice(networkNodes,
                         delimiter+1:nrow(networkNodes))
-                    nodes <- nodes[,c(1,2,3)]
-                    },
-                    warning=function(w) {print("Incorrect file format (dat)")
-                        return(NA)
-                    },
-                    error=function(e) {print("Incorrect file format (dat)")
-                        return(NULL)
-                    }
-                    )},
+                    nodes <- nodes[,c(1,2,3)]},
 
                 stg={
-                    tryCatch({
-
                     nodes <- read.delim(file = networkNodes, header = TRUE,
                         sep = "\t", stringsAsFactors=FALSE, fill = TRUE)
                     edges <- read.delim(file = networkEdges, header = TRUE,
@@ -126,21 +108,9 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                     edges <- edges[,c(1,2)]
                     nodes <- nodes[,c(1,2,3)]
                     colnames(edges) <- c("V1", "V2")
-                    colnames(nodes) <- c("V1", "V2", "V3")
-                    },
-                    warning=function(w) {print("Incorrect file format (String)
-                    or missing file")
-                        return(NA)
-                    },
-                    error=function(e) {print("Incorrect file format (String)
-                    or missing file")
-                        return(NULL)
-                    }
-                    )},
+                    colnames(nodes) <- c("V1", "V2", "V3")},
 
                 net={
-                    tryCatch({
-
                     net_read <- read.delim(file = networkNodes, header = FALSE,
                         stringsAsFactors=FALSE)
 
@@ -168,7 +138,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                             nodes_ft <- data.frame(lapply(nodes_ft, function(x)
                                 {gsub("TRUE", "T", x)}),
                                 stringsAsFactors = FALSE)
-                           nodes <-rbind(nodes, nodes_ft)
+                            nodes <-rbind(nodes, nodes_ft)
                         }
 
 
@@ -181,7 +151,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                             colnames(edges_ft) <- c("V1", "V2")
                             edges <-rbind(edges, edges_ft)
 
-                       }
+                        }
 
 
 
@@ -197,21 +167,10 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                         colnames(nodes) <- c("V1", "V2", "V3")
                         nodes <-nodes
                         edges <- edges
-
-
-                    },
-                    warning=function(w) {print("Incorrect file format  (net)")
-                        return(NA)
-                    },
-                    error=function(e) {print("Incorrect file format (net)")
-                        return(NULL)
-                    }
-                    )},
+                        },
 
 
                 dyn={
-                    tryCatch({
-
                         tf <- tempfile(tmpdir = tdir <- tempdir())
                         dyn_files <- unzip(networkNodes, exdir = tdir)
                         dyn_read <- read_xml(dyn_files , stringsAsFactors=FALSE)
@@ -294,24 +253,14 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                         nodes$V2 = as.numeric(nodes$V2)
                         nodes$V3 = as.numeric(nodes$V3)
                         nodes <- nodes
+                        }
 
-                    },
-                    warning=function(w) {print("Incorrect file format (dyn)")
-                        return(NA)
-                    },
-                    error=function(e) {print("Incorrect file format (dyn)")
-                        return(NULL)
-                    }
-                    )},
-                {
-                    print('Input a valid file format')
-                }
-         )
+        )
 
 
-         tryCatch({
+        tryCatch({
 
-             #Remove"NA" and "-" from expression file
+        #Remove"NA" and "-" from expression file
             expression <- read.delim(file = nameBase, header = TRUE,
             sep = "\t", quote = "")
 
@@ -453,7 +402,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
         edgesSignalMerge[,c(12)])/2
         edgesSignalMerge$V3 <- (edgesSignalMerge[,c(7)] +
         edgesSignalMerge[,c(11)])/2
-        ##############################################################################
+        ########################################################################
 
         nnodes <- nrow(nodes)
         nedges <- nrow(edges)
@@ -536,32 +485,19 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
 
 
         n<-resolutionValue
-        ExpCtrl <- matrix(data = 0, ncol = n, nrow = n)
-        exp <- matrix(data = 0, ncol = n, nrow = n)
-        ctrl <- matrix(data = 0, ncol = n, nrow = n)
-
-        b<-matrixOutExp[1,1]
-        c<-matrixOutCtrl[1,1]
-
-        for (i in 1:resolutionValue){
-            for (j in 1:(resolutionValue-1)){
-                if(b < matrixOutExp[i,(j+1)]){b<-matrixOutExp[i,(j+1)]}
-                if(c < matrixOutCtrl[i,(j+1)]){c<-matrixOutCtrl[i,(j+1)]}
-            }
-        }
-
-        for (i in seq_len(resolutionValue)) {
-            k<-resolutionValue
-            for (j in seq_len((resolutionValue))) {
-                matrixOutExp[i,j]<-matrixOutExp[i,j]/b
-                matrixOutCtrl[i,j]<-matrixOutCtrl[i,j]/c
+        i <- seq_len(n)
+        j <- seq_len(n-1)
+        b <- max(matrixOutExp[i, j+1])
+        c <- max(matrixOutCtrl[i, j+1])
 
 
-                ExpCtrl[i,k]<-matrixOut[i,j]
-                exp[i,k]<-matrixOutExp[i,j]
-                ctrl[i,k]<-matrixOutCtrl[i,j]
-                k<-k-1
-            }}
+        matrixOutExp[i, i] <- matrixOutExp[i, i]/b
+        matrixOutCtrl[i, i] <- matrixOutCtrl[i, i]/c
+
+        ExpCtrl <- matrixOut[i, rev(i)]
+        exp <- matrixOutExp[i, rev(i)]
+        ctrl <- matrixOutCtrl[i, rev(i)]
+
 
         if (baseTest == baseControl){
             landgraph <- melt(exp, value.name = "z")
@@ -581,7 +517,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                 geom_raster(aes(fill = z), interpolate = TRUE, hjust = 0.5,
                 vjust = 0.5) +
                 geom_contour(aes(z = z)) +
-                scale_fill_gradientn(colours=colorSet,
+                scale_fill_gradientn(colours=colorSet(x, setcolor),
                 values=c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45,
                 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1),
                 breaks=seq(0,1,0.2), limits=c(0,1),
@@ -611,7 +547,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                 aes(x = Var1, y = Var2))+
                 geom_raster(aes(fill = z), interpolate = TRUE,
                 hjust = 0.5, vjust = 0.5) +
-                scale_fill_gradientn(colours=colorSet,
+                scale_fill_gradientn(colours=colorSet(x, setcolor),
                 values=c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45,
                 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1),
                 breaks=seq(0,1,0.2), limits=c(0,1),
@@ -637,9 +573,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                 length = unit(x = c(0.2), units = "cm"))) +
                 coord_fixed(ratio = 1)
         }
-
-        landgraphChart + coord_fixed(ratio = 1)
-
+        landgraphChart <- landgraphChart + coord_fixed(ratio = 1)
         print(landgraphChart)
     }
 }

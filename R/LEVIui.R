@@ -6,8 +6,8 @@
 #' heatmap to calculate the gene expression levels in the area selected;
 #' 2) Selection of the genes in some specific area from the image.
 #' @usage LEVIui(browser)
-#' @param browser This argument is necessary to launch Levi GUI. To launch Levi in
-#' the web browser the argument required "TRUE". To launch Levi in the R
+#' @param browser This argument is necessary to launch Levi GUI. To launch Levi
+#' in the web browser the argument required "TRUE". To launch Levi in the R
 #' environment the argument required "FALSE". The default is "FALSE"
 #' @return return a GUI
 #' @export
@@ -20,7 +20,9 @@
 
 LEVIui <-function(browser){
 tryCatch({
-    if (browser){
+    if (!is(browser, "logical"))
+        stop("'browser' must be a TRUE or FALSE")
+    if (browser) {
         shiny::runApp(system.file("shiny",package="levi"),
         launch.browser = TRUE)
     } else {
