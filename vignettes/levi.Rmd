@@ -27,15 +27,17 @@ plugin for Cytoscape software.
 
 
 
-Two files are required to use **levi**: The file containing the expression levels 
-of the genes and a file containing the biological network.
+Two files are required to use **levi**: The file containing the expression 
+levels of the genes and a file containing the biological network.
 
 # Files
 ## Gene Expression Levels
-This file should contain the genes of interest previously normalized by the user. The expression file 
+This file should contain the genes of interest previously normalized by the 
+user. The expression file 
 (see [Example](https://bit.ly/2KSBaOo)) must have a column with the 
 identification of genes (Gene Symbol, Entrez, etc.) and at least one column 
-with gene expression levels (treatment, case, control, etc.).  The user can compare 
+with gene expression levels (treatment, case, control, etc.).  The user can 
+compare 
 the expression levels between samples if  there are more columns containing 
 these data.
 
@@ -94,7 +96,7 @@ LEVIui(browser=FALSE) #Launch Levi to R environment.
 ```
 
 <center><img src="levi.png" width=100%></center>
-<center> <b>Figure 1: </b> Graphical User Interface (GUI).</center>
+<center> <b>Figure 2: </b> Graphical User Interface (GUI).</center>
 
 * **1** - **Tabs**
     + **File** - General options for uploading the data files.
@@ -157,10 +159,11 @@ template_expression <- file.path(system.file(package="levi"),
                                 "extdata","expression.dat", 
                                 fsep = .Platform$file.sep)
 
-landscape <- levi(networkNodesInput = template_network,
+landscape <- levi(networkCoordinatesInput = template_network,
                 expressionInput = template_expression, fileTypeInput = "dat",
                 geneSymbolnput = "ID", 
-                readExpColumn=readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"), 
+                readExpColumn=
+                readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"), 
                 contrastValueInput = 50, resolutionValueInput  = 50, 
                 zoomValueInput = 50, smoothValueInput = 50, contourLevi = TRUE)
 ```
@@ -182,7 +185,7 @@ template_expression <- file.path(system.file(package="levi"),
                                 "extdata","expression.dat", 
                                 fsep = .Platform$file.sep)
 
-landscape <- levi(networkNodesInput = template_network,
+landscape <- levi(networkCoordinatesInput = template_network,
                     expressionInput = template_expression, 
                     fileTypeInput = "dat",
                     geneSymbolnput = "ID", readExpColumn= base, 
@@ -190,8 +193,6 @@ landscape <- levi(networkNodesInput = template_network,
                     zoomValueInput = 50, smoothValueInput = 50, 
                     contourLevi = FALSE)
 ```
-
-Visit the [levi homepage](http://www.biocomplexitylab.net/en/softwares/levi/) to check more information about the package
 
 
 # Session information
