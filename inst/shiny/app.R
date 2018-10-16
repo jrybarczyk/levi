@@ -15,13 +15,13 @@ suppressMessages(require(xml2))
 
 
 
-if(getRversion() >= "3.4.0") utils::globalVariables(c("V1", "X", "Y",
+if(getRversion() >= "3.5.1") utils::globalVariables(c("V1", "X", "Y",
     "Expression", "Gene", "SigCoordPiso", "matrix_entrada", "matrix_saida",
     "renderText", "matrixOutFun"))
 
 
-levi_shiny = function(expression, fileType, networkEdges,
-    networkNodes, geneSymbol,baseTest,baseControl, alphaValue, betaValue,
+levi_shiny = function(expression, fileType, networkCoord,
+    networkInterac, geneSymbol,baseTest,baseControl, alphaValue, betaValue,
     backValue, smoothValue, expressionLog){
 
     #Configuration of contrast, resolution, smothing and zoom
@@ -79,28 +79,28 @@ levi_shiny = function(expression, fileType, networkEdges,
 
 
 
-    if (fileType == "dat"){edges <-dplyr::select(networkEdges, -3)}
-    if (fileType == "net"){edges <-networkEdges}
-    if (fileType == "dyn"){edges <-networkEdges}
-    if (fileType == "stg"){edges <-networkEdges}
+    if (fileType == "dat"){edges <-dplyr::select(networkCoord, -3)}
+    if (fileType == "net"){edges <-networkCoord}
+    if (fileType == "dyn"){edges <-networkCoord}
+    if (fileType == "stg"){edges <-networkCoord}
 
     if (fileType == "dat"){
-        nodes <- as.data.frame(networkNodes)
+        nodes <- as.data.frame(networkInterac)
         nodes[, c(2)] <- sapply(nodes[, c(2)], as.double)
         nodes <- arrange(nodes, V1)}
 
     if (fileType == "net"){
-        nodes <- as.data.frame(networkNodes)
+        nodes <- as.data.frame(networkInterac)
         nodes <- arrange(nodes, V1)
     }
 
     if (fileType == "dyn"){
-        nodes <- as.data.frame(networkNodes)
+        nodes <- as.data.frame(networkInterac)
         nodes <- arrange(nodes, V1)
     }
 
     if (fileType == "stg"){
-        nodes <- as.data.frame(networkNodes)
+        nodes <- as.data.frame(networkInterac)
         nodes <- arrange(nodes, V1)
     }
 
@@ -392,7 +392,7 @@ levi_shiny = function(expression, fileType, networkEdges,
                         t = 1;
                         }
                     }
-                if ((vetInPos(n,0) < vetInPos(vetOut(m,0),0) & (t!=1))){
+                if (((vetInPos(n,0) < vetInPos(vetOut(m,0),0)) & (t!=1))){
                     vetOut(m,0) = n;
                     matrixOutPos(i,j) = matrixInPos(vetOut(m,0),0);}
                 }
@@ -440,34 +440,22 @@ levi_shiny = function(expression, fileType, networkEdges,
 
 
     n<-backValue
-    ExpCtrl <- matrix(data = 0, ncol = n, nrow = n)
-    exp <- matrix(data = 0, ncol = n, nrow = n)
-    ctrl <- matrix(data = 0, ncol = n, nrow = n)
     ExpCtrlPos <- matrix(data = 0, ncol = n, nrow = n)
 
-    b<-matrixOutExp[1,1]
-    c<-matrixOutCtrl[1,1]
-
-    for (i in 1:backValue){
-        for (j in 1:(backValue-1)){
-            if(b < matrixOutExp[i,(j+1)]){b<-matrixOutExp[i,(j+1)]}
-            if(c < matrixOutCtrl[i,(j+1)]){c<-matrixOutCtrl[i,(j+1)]}
-        }
-    }
-
-    for (i in seq_len(backValue)) {
-        k<-backValue
-        for (j in seq_len((backValue))) {
-            matrixOutExp[i,j]<-matrixOutExp[i,j]/b
-            matrixOutCtrl[i,j]<-matrixOutCtrl[i,j]/c
+    i <- seq_len(n)
+    j <- seq_len(n-1)
+    b <- max(matrixOutExp[i, j+1])
+    c <- max(matrixOutCtrl[i, j+1])
 
 
-            ExpCtrl[i,k]<-matrixOut[i,j]
-            exp[i,k]<-matrixOutExp[i,j]
-            ctrl[i,k]<-matrixOutCtrl[i,j]
-            ExpCtrlPos[i,k]<-matrixOutPos[i,j]
-            k<-k-1
-        }}
+    matrixOutExp[i, i] <- matrixOutExp[i, i]/b
+    matrixOutCtrl[i, i] <- matrixOutCtrl[i, i]/c
+
+    ExpCtrl <- matrixOut[i, rev(i)]
+    exp <- matrixOutExp[i, rev(i)]
+    ctrl <- matrixOutCtrl[i, rev(i)]
+    ExpCtrlPos <- matrixOutPos[i, rev(i)]
+
 
     if (baseTest == baseControl){
         landgraph <- melt(exp, value.name = "z")
@@ -638,10 +626,10 @@ server <- function(input, output, session) {
 
                 delimiter <- which(nodeslist == "*nodes")
 
-                networkEdges <- slice(nodeslist, 3:delimiter-1)
-                v$networkEdges <- networkEdges[,c(1,2)]
-                networkNodes <- slice(nodeslist, delimiter+1:nrow(nodeslist))
-                v$networkNodes <- networkNodes[,c(1,2,3)]
+                networkCoord <- slice(nodeslist, 3:delimiter-1)
+                v$networkCoord <- networkCoord[,c(1,2)]
+                networkInterac <- slice(nodeslist, delimiter+1:nrow(nodeslist))
+                v$networkInterac <- networkInterac[,c(1,2,3)]
             },
             warning=function(w) {showNotification("Incorrect file format",
                 type = "warning",
@@ -670,17 +658,17 @@ server <- function(input, output, session) {
                 data3 <- input$file3
                 if(is.null(data3)){return()}
 
-                networkNodes <- read.delim(file = data2$datapath, header = TRUE,
+                networkInterac <- read.delim(file = data2$datapath, header = TRUE,
                     sep = "\t", stringsAsFactors=FALSE, fill = TRUE)
-                networkEdges <- read.delim(file = data3$datapath, header = TRUE,
+                networkCoord <- read.delim(file = data3$datapath, header = TRUE,
                     sep = "\t", stringsAsFactors=FALSE, fill = TRUE)
 
-                networkEdges <- networkEdges[,c(1,2)]
-                networkNodes <- networkNodes[,c(1,2,3)]
-                colnames(networkEdges) <- c("V1", "V2")
-                colnames(networkNodes) <- c("V1", "V2", "V3")
-                v$networkEdges <- networkEdges
-                v$networkNodes <- networkNodes
+                networkCoord <- networkCoord[,c(1,2)]
+                networkInterac <- networkInterac[,c(1,2,3)]
+                colnames(networkCoord) <- c("V1", "V2")
+                colnames(networkInterac) <- c("V1", "V2", "V3")
+                v$networkCoord <- networkCoord
+                v$networkInterac <- networkInterac
 
             },
             warning=function(w) {showNotification("Incorrect file format
@@ -714,7 +702,7 @@ server <- function(input, output, session) {
                                       stringsAsFactors=FALSE)
 
                 delimiter_edge <- which(netRead == "*Edges")
-                networkEdges <- data_frame()
+                networkCoord <- data_frame()
 
                 edgesSL <- as.data.frame(slice(netRead,
                     delimiter_edge+1:nrow(netRead)))
@@ -722,7 +710,7 @@ server <- function(input, output, session) {
                 delimiter_nodes_end <- which(netRead == "*Edges")
                 nodesSl <- as.data.frame(
                     slice(netRead, 3:delimiter_nodes_end-1))
-                networkNodes <- data_frame()
+                networkInterac <- data_frame()
                 for (i in seq_len(nrow(nodesSl))) {
                     nodesRt <- read.table(text = as.character(nodesSl[i,1]),
                     sep = " ")
@@ -734,7 +722,7 @@ server <- function(input, output, session) {
                     {gsub("FALSE", "F", x)}), stringsAsFactors = FALSE)
                     nodesFt <- data.frame(lapply(nodesFt, function(x)
                     {gsub("TRUE", "T", x)}), stringsAsFactors = FALSE)
-                    networkNodes <-rbind(networkNodes, nodesFt)
+                    networkInterac <-rbind(networkInterac, nodesFt)
                 }
 
 
@@ -744,23 +732,23 @@ server <- function(input, output, session) {
                     edgesFt <- Filter(function(x)!all(is.na(x)), edgesRt)
                     edgesFt <- edgesFt[,c(1,2)]
                     colnames(edgesFt) <- c("V1", "V2")
-                    networkEdges <-rbind(networkEdges, edgesFt)
+                    networkCoord <-rbind(networkCoord, edgesFt)
 
                 }
 
-                netMerge<- merge(networkEdges, networkNodes, by.x = "V1",
+                netMerge<- merge(networkCoord, networkInterac, by.x = "V1",
                     by.y = "V1",
                     all.x = FALSE)
                 colnames(netMerge) <- c("a", "b", "c", "d", "e")
-                netMerge<- merge(netMerge, networkNodes, by.x = "b",
+                netMerge<- merge(netMerge, networkInterac, by.x = "b",
                     by.y = "V1", all.x = FALSE)
-                networkEdges <- netMerge[,c(3,6)]
-                colnames(networkEdges) <- c("V1", "V2")
+                networkCoord <- netMerge[,c(3,6)]
+                colnames(networkCoord) <- c("V1", "V2")
 
-                networkNodes <- networkNodes[,c(2,3,4)]
-                colnames(networkNodes) <- c("V1", "V2", "V3")
-                v$networkNodes <-networkNodes
-                v$networkEdges <- networkEdges
+                networkInterac <- networkInterac[,c(2,3,4)]
+                colnames(networkInterac) <- c("V1", "V2", "V3")
+                v$networkInterac <-networkInterac
+                v$networkCoord <- networkCoord
 
 
             },
@@ -800,8 +788,8 @@ server <- function(input, output, session) {
 
                 dynId <- xml_find_all(dynRead, xpath = "//*/*/@id")
                 valsId <- trimws(xml_text(dynId))
-                networkNodes <- as.data.frame(slice(dynDf, 1:length(valsId)))
-                networkNodes$V1 <- seq(0,nrow(networkNodes)-1)
+                networkInterac <- as.data.frame(slice(dynDf, 1:length(valsId)))
+                networkInterac$V1 <- seq(0,nrow(networkInterac)-1)
 
                 dynSource <- xml_find_all(dynRead, xpath = "//*/*/@source")
                 dynTarget <- xml_find_all(dynRead, xpath = "//*/*/@target")
@@ -836,27 +824,27 @@ server <- function(input, output, session) {
                     replacement = "", fixed = TRUE), stringsAsFactors = FALSE)
                 colnames(datay) <- NULL
 
-                networkEdges <- datateste
-                networkEdges$V1 <- as.numeric(networkEdges$V1)
-                networkEdges$V2 <- as.numeric(networkEdges$V2)
+                networkCoord <- datateste
+                networkCoord$V1 <- as.numeric(networkCoord$V1)
+                networkCoord$V2 <- as.numeric(networkCoord$V2)
 
-                t1<- merge(networkEdges, networkNodes, by.x = "V1",
+                t1<- merge(networkCoord, networkInterac, by.x = "V1",
                     by.y = "V1")
                 colnames(t1) <- c("a", "b", "c")
-                t1<- merge(t1, networkNodes, by.x = "b", by.y = "V1",
+                t1<- merge(t1, networkInterac, by.x = "b", by.y = "V1",
                     all.x = FALSE)
-                networkEdges <- as.matrix(t1[,c(3,4)])
-                colnames(networkEdges) <- c("V1", "V2")
+                networkCoord <- as.matrix(t1[,c(3,4)])
+                colnames(networkCoord) <- c("V1", "V2")
 
-                v$networkEdges <- networkEdges
+                v$networkCoord <- networkCoord
 
-                networkNodes <- as.data.frame(cbind(networkNodes[,1], t(datax),
+                networkInterac <- as.data.frame(cbind(networkInterac[,1], t(datax),
                     t(datay)), stringsAsFactors = FALSE)
 
-                networkNodes$V1 = as.character(networkNodes$V1)
-                networkNodes$V2 = as.numeric(networkNodes$V2)
-                networkNodes$V3 = as.numeric(networkNodes$V3)
-                v$networkNodes <- networkNodes
+                networkInterac$V1 = as.character(networkInterac$V1)
+                networkInterac$V2 = as.numeric(networkInterac$V2)
+                networkInterac$V3 = as.numeric(networkInterac$V3)
+                v$networkInterac <- networkInterac
 
             },
             warning=function(w) {showNotification("Incorrect file format",
@@ -879,7 +867,7 @@ server <- function(input, output, session) {
 
             input$log
             v$func_ne_return <-levi_shiny(v$expression, v$fileType,
-                v$networkEdges, v$networkNodes, input$geneSymbol,
+                v$networkCoord, v$networkInterac, input$geneSymbol,
                 input$baseTest,input$baseControl , alphaValue = input$contrast,
                 betaValue = input$zoom,backValue= input$size,
                 smoothValue = input$smooth, expressionLog = input$log)
