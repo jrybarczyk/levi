@@ -4,8 +4,8 @@
 \alias{levi}
 \title{levi}
 \usage{
-levi(expressionInput, fileTypeInput, networkNodesInput,
-networkEdgesInput, geneSymbolnput, readExpColumn,
+levi(expressionInput, fileTypeInput, networkCoordinatesInput,
+networkInteractionsInput, geneSymbolnput, readExpColumn,
 contrastValueInput, zoomValueInput, resolutionValueInput,
 smoothValueInput, expressionLog, contourLevi, setcolor)
 }
@@ -18,12 +18,11 @@ columns represent the experiment (RNA-seq, microarray, etc).}
 written in the following formats: Medusa (DAT), RedeR (DYN), Pajek (NET)
 and STRING/STITCH}
 
-\item{networkNodesInput}{Parameter available only to STRING/STITCH data
-format.
-It allows the user to load the coordinate of the nodes the network.}
+\item{networkCoordinatesInput}{It allows the user to load the coordinate
+of the nodes the network.}
 
-\item{networkEdgesInput}{Parameter available only to STRING/STITCH data
-format.
+\item{networkInteractionsInput}{Parameter available only to
+STRING/STITCH data format.
 It allows the user to load the interaction data file of the network.}
 
 \item{geneSymbolnput}{Column name from gene expression data containing the
@@ -70,7 +69,7 @@ template_network <- file.path(system.file(package="levi"),"extdata",
    "medusa.dat", fsep = .Platform$file.sep)
 template_expression <- file.path(system.file(package="levi"),
    "extdata","expression.dat", fsep = .Platform$file.sep)
-landscape <- levi(networkNodesInput = template_network,
+landscape <- levi(networkCoordinatesInput = template_network,
    expressionInput = template_expression, fileTypeInput = "dat",
    geneSymbolnput = "ID",
    readExpColumn=readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"),
