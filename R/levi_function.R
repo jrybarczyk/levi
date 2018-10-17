@@ -258,8 +258,6 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
         )
 
 
-        tryCatch({
-
         #Remove"NA" and "-" from expression file
             expression <- read.delim(file = nameBase, header = TRUE,
             sep = "\t", quote = "")
@@ -291,16 +289,6 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                  FUN = function(media_valor){
                      mean(media_valor)
                      })
-        },
-        warning=function(w) {print("Incorrect Expression file or Gene Symbol
-            column")
-            return(NA)
-        },
-        error=function(e) {print("Incorrect Expression file or Gene Symbol
-            column")
-            return(NULL)
-        }
-        )
 
 
         if (fileType == "dat"){
@@ -378,7 +366,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
 
         #Creates log if exists nodes without expression value
         if (length(naTotal) > 0) {
-            print(paste0(
+            message(paste0(
                 "There are ",nrow(naTotal)," nodes without expression value,
                 see log in path: ",
                 file.path(tempdir(),titleChart, "levi.log")))
@@ -391,7 +379,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
             open = "wt")
             sink(levi_log)
             sink(levi_log, type = "message")
-            print(as.vector(naTotal))
+            warning(as.vector(naTotal))
             sink(type = "message")
             sink()
         }
@@ -575,6 +563,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
         }
         landgraphChart <- landgraphChart + coord_fixed(ratio = 1)
         print(landgraphChart)
+
     }
 }
 
