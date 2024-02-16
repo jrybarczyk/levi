@@ -49,11 +49,13 @@ expression levels. The default is FALSE}
 \item{contourLevi}{Logical variable to allow contour lines. The default is
 TRUE.}
 
-\item{setcolor}{Select the color palette to build the heatmat. The options
-available are:  default, terrain, rainbow, heat, topo and cm.}
+\item{setcolor}{Select the color palette to build the heatmat. There is
+two options the **Multicolor** has 20 color levels combined. The
+**Two colors** has two types of color and the options available are: *purple_pink*,
+*green_blue*, *blue_yellow*, *pink_green*, *orange_purple*, *green_marine*.}
 }
 \value{
-Return a image (heatmat).
+Return a ggplot object and print a image (heatmat).
 }
 \description{
 This is the Levi script mode. It allows you to create the
@@ -67,16 +69,23 @@ Integrates the biological network and gene expression levels
 \examples{
 template_network <- file.path(system.file(package="levi"),"extdata",
    "medusa.dat", fsep = .Platform$file.sep)
+
 template_expression <- file.path(system.file(package="levi"),
    "extdata","expression.dat", fsep = .Platform$file.sep)
-landscape <- levi(networkCoordinatesInput = template_network,
+
+multicolor <- levi(networkCoordinatesInput = template_network,
    expressionInput = template_expression, fileTypeInput = "dat",
    geneSymbolnput = "ID",
    readExpColumn=readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"),
    contrastValueInput = 50, resolutionValueInput  = 50, zoomValueInput = 50,
-   smoothValueInput = 50, expressionLog = FALSE, contourLevi = TRUE,
-   setcolor = "default")
+   smoothValueInput = 50, expressionLog = FALSE, contourLevi = TRUE)
+
+twocolors <- levi(networkCoordinatesInput = template_network,
+   expressionInput = template_expression, fileTypeInput = "dat",
+   geneSymbolnput = "ID",
+   readExpColumn = readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"),
+   setcolor = "pink_green", contourLevi = FALSE)
 }
 \author{
-José Rafael Pilan (rafael.pilan@unesp.br)
+Isabelle Mira da Silva (isabelle.silva@unesp.br), José Rafael Pilan (rafael.pilan@unesp.br)
 }
