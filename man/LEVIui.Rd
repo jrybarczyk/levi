@@ -7,8 +7,8 @@
 LEVIui(browser)
 }
 \arguments{
-\item{browser}{This argument is necessary to launch Levi GUI. To launch Levi in
-the web browser the argument required "TRUE". To launch Levi in the R
+\item{browser}{This argument is necessary to launch Levi GUI. To launch Levi
+in the web browser the argument required "TRUE". To launch Levi in the R
 environment the argument required "FALSE". The default is "FALSE"}
 }
 \value{
@@ -31,5 +31,6 @@ LEVIui(browser)
 
 }
 \author{
-José Rafael Pilan <rafael.pilan@unesp.br>
+José Rafael Pilan <rafael.pilan@unesp.br> &
+Isabelle Mira da Silva (isabelle.silva@unesp.br)
 }
