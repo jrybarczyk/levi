@@ -1,6 +1,6 @@
 ---
 title: "levi - Landscape Expression Visualization Interface"
-author: "José R. Pilan, Agnes A. S. Takeda, 
+author: "Isabelle M. da Silva, José R. Pilan, Agnes A. S. Takeda, 
 Jose L. Rybarczyk-Filho"
 date: "`r doc_date()`"
 package: "`r pkg_ver('levi')`"
@@ -95,7 +95,7 @@ LEVIui(browser=FALSE) #Launch Levi to R environment.
 
 ```
 
-<center><img src="levi.png" width=100%></center>
+<center><img src="Newlevi.png" width=150%></center>
 <center> <b>Figure 2: </b> Graphical User Interface (GUI).</center>
 
 * **1** - **Tabs**
@@ -107,32 +107,38 @@ format. The options are available on the table 1.
 network file.
 * **4** - **Upload the expression file** - Input button to select the gene 
 expression levels file.
-* **5** - **Selected fields** - Selecting the type of analysis. Comparison 
+* **5** - **Expression values in log scale** - 
+select when there is low variation between expression data
+* **6** - **Selected fields** - Selecting the type of analysis. Comparison 
 between two samples or a single sample.
-* **6** - **Select gene symbol field** -  Selection of the gene ID contained 
+* **7** - **Select gene symbol field** -  Selection of the gene ID contained 
 in the gene expression levels file.  The gene ID in the biological network 
 file must be the same in the gene expression levels file. **Select test field**
 -  Select the case/test sample. **Select control field** - Select the 
 control sample. If **levi** detects the case/test sample and control sample as
 equal, then **levi** will apply the "single sample" analysis.
-* **7** - **Chart Colors** - Color palette to build the **landscape**. Each 
-palette has 20 color levels. The options available are: Default, Terrain, 
-Rainbow, Heat, Topo, CM (Figure 3 and Figure 4).
-* **8** - **Chart with contour** - Enable or disable the contour lines in 
+* **8** - **Chart Colors** - Color palette to build the **landscape**. There is 
+two options the **Multicolor** has 20 color levels combined. The 
+**Two colors** has two categories of color palettes, multicolor and two colors. 
+For the selection of two colors the available options are: *purple_pink*, 
+*green_blue*, *blue_yellow*, *pink_green*, *orange_purple*, *green_marine*. 
+Both of them is targeted to show the biological network with higher expression. 
+(Figure 3 and Figure 4).
+* **9** - **Chart with contour** - Enable or disable the contour lines in 
 the **landscape**.
-* **9** -  **landscape** Image display area. The user can select specific 
+* **10** -  **landscape** Image display area. The user can select specific 
 areas of the image to inspect the gene name and position.
-* **10** - **Expression area:** - Total expression value of the selected 
+* **11** - **Expression area:** - Total expression value of the selected 
 area in the image.
-* **11** - **Download options**
+* **12** - **Download options**
     + **File format to landscape** - Select the output format of the
     **landscape**. The options available are: TIFF, BMP,  JPEG and PNG. We 
     recommend using this option in the browser.
     + **Download Plot** - Button to save the file.
-* **12** -  Visualization of gene name and expression value of the selected 
+* **13** -  Visualization of gene name and expression value of the selected 
 area in the **landscape**. The user can save the table in a csv file 
 (button **Download Data**)
-* **13** - **Settings**
+* **14** - **Settings**
     + **Contrast** - Constrast value in the **landscape**. The variable 
     range is 1 to 100. The default value is 50.
     + **Resolution** -  Image  size of the **landscape**. The variable 
@@ -159,15 +165,22 @@ template_expression <- file.path(system.file(package="levi"),
                                 "extdata","expression.dat", 
                                 fsep = .Platform$file.sep)
 
-landscape <- levi(networkCoordinatesInput = template_network,
+multicolor <- levi(networkCoordinatesInput = template_network,
                 expressionInput = template_expression, fileTypeInput = "dat",
                 geneSymbolnput = "ID", 
                 readExpColumn=
                 readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"), 
                 contrastValueInput = 50, resolutionValueInput  = 50, 
                 zoomValueInput = 50, smoothValueInput = 50, contourLevi = TRUE)
-```
 
+twocolors <- levi(networkCoordinatesInput = template_network,
+                expressionInput = template_expression, fileTypeInput = "dat",
+                geneSymbolnput = "ID", 
+                readExpColumn=
+                readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"),
+                setcolor = "pink_green", contourLevi = FALSE)
+
+```
 The script mode allows the user to compare combinations between two 
 experiments in the gene expression levels file. The readExpColumn function 
 can be used to this task to inform the combination separating by dash (-) 
@@ -185,13 +198,20 @@ template_expression <- file.path(system.file(package="levi"),
                                 "extdata","expression.dat", 
                                 fsep = .Platform$file.sep)
 
-landscape <- levi(networkCoordinatesInput = template_network,
+multicolor <- levi(networkCoordinatesInput = template_network,
                     expressionInput = template_expression, 
                     fileTypeInput = "dat",
                     geneSymbolnput = "ID", readExpColumn= base, 
                     contrastValueInput = 50, resolutionValueInput  = 50, 
                     zoomValueInput = 50, smoothValueInput = 50, 
                     contourLevi = FALSE)
+
+twocolors <- levi(networkCoordinatesInput = template_network,
+                expressionInput = template_expression, fileTypeInput = "dat",
+                geneSymbolnput = "ID", 
+                readExpColumn= base,
+                setcolor = "pink_green", contourLevi = FALSE)
+
 ```
 
 
