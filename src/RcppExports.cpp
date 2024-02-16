@@ -5,6 +5,28 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
+// SigCoordPiso
+NumericMatrix SigCoordPiso(NumericMatrix coord, int resolutionValue, double gamaValue, double increase, double contrastValue, double zoomValue, int numberCoord);
+RcppExport SEXP _levi_SigCoordPiso(SEXP coordSEXP, SEXP resolutionValueSEXP, SEXP gamaValueSEXP, SEXP increaseSEXP, SEXP contrastValueSEXP, SEXP zoomValueSEXP, SEXP numberCoordSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type coord(coordSEXP);
+    Rcpp::traits::input_parameter< int >::type resolutionValue(resolutionValueSEXP);
+    Rcpp::traits::input_parameter< double >::type gamaValue(gamaValueSEXP);
+    Rcpp::traits::input_parameter< double >::type increase(increaseSEXP);
+    Rcpp::traits::input_parameter< double >::type contrastValue(contrastValueSEXP);
+    Rcpp::traits::input_parameter< double >::type zoomValue(zoomValueSEXP);
+    Rcpp::traits::input_parameter< int >::type numberCoord(numberCoordSEXP);
+    rcpp_result_gen = Rcpp::wrap(SigCoordPiso(coord, resolutionValue, gamaValue, increase, contrastValue, zoomValue, numberCoord));
+    return rcpp_result_gen;
+END_RCPP
+}
 // matrix_entrada
 List matrix_entrada(NumericMatrix coordPiso, NumericMatrix SignalOut, NumericMatrix signalExp, NumericMatrix signalCtrl, NumericMatrix coord, int resolutionValue, double increase, double zoomValue, int numberCoord);
 RcppExport SEXP _levi_matrix_entrada(SEXP coordPisoSEXP, SEXP SignalOutSEXP, SEXP signalExpSEXP, SEXP signalCtrlSEXP, SEXP coordSEXP, SEXP resolutionValueSEXP, SEXP increaseSEXP, SEXP zoomValueSEXP, SEXP numberCoordSEXP) {
@@ -41,28 +63,11 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// SigCoordPiso
-NumericMatrix SigCoordPiso(NumericMatrix coord, int resolutionValue, double gamaValue, double increase, double contrastValue, double zoomValue, int numberCoord);
-RcppExport SEXP _levi_SigCoordPiso(SEXP coordSEXP, SEXP resolutionValueSEXP, SEXP gamaValueSEXP, SEXP increaseSEXP, SEXP contrastValueSEXP, SEXP zoomValueSEXP, SEXP numberCoordSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type coord(coordSEXP);
-    Rcpp::traits::input_parameter< int >::type resolutionValue(resolutionValueSEXP);
-    Rcpp::traits::input_parameter< double >::type gamaValue(gamaValueSEXP);
-    Rcpp::traits::input_parameter< double >::type increase(increaseSEXP);
-    Rcpp::traits::input_parameter< double >::type contrastValue(contrastValueSEXP);
-    Rcpp::traits::input_parameter< double >::type zoomValue(zoomValueSEXP);
-    Rcpp::traits::input_parameter< int >::type numberCoord(numberCoordSEXP);
-    rcpp_result_gen = Rcpp::wrap(SigCoordPiso(coord, resolutionValue, gamaValue, increase, contrastValue, zoomValue, numberCoord));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_levi_SigCoordPiso", (DL_FUNC) &_levi_SigCoordPiso, 7},
     {"_levi_matrix_entrada", (DL_FUNC) &_levi_matrix_entrada, 9},
     {"_levi_matrix_saida", (DL_FUNC) &_levi_matrix_saida, 7},
-    {"_levi_SigCoordPiso", (DL_FUNC) &_levi_SigCoordPiso, 7},
     {NULL, NULL, 0}
 };
 
