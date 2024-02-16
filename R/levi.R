@@ -1,6 +1,6 @@
 #' @title levi
-#' @import RColorBrewer shinydashboard httr
-#' @import xml2 Rcpp knitr
+#' @import RColorBrewer shinydashboard httr rmarkdown markdown
+#' @import xml2 Rcpp knitr methods
 #' @importFrom Rcpp evalCpp
 #' @useDynLib levi
 #' @importFrom shinyjs hide enable disable reset useShinyjs extendShinyjs
@@ -19,9 +19,9 @@
 #'         renderPrint fluidRow showNotification brushedPoints
 #' @importFrom dplyr union as_data_frame groups select slice data_frame
 #' @importFrom dplyr arrange %>% filter
+#' @importFrom methods is
 #' @importFrom DT datatable dataTableOutput renderDataTable
 #' @importFrom igraph graph.edgelist as_long_data_frame
-#' @importFrom methods is
 #' @usage levi(expressionInput, fileTypeInput, networkCoordinatesInput,
 #' networkInteractionsInput, geneSymbolnput, readExpColumn,
 #' contrastValueInput, zoomValueInput, resolutionValueInput,
@@ -56,24 +56,33 @@
 #' expression levels. The default is FALSE
 #' @param contourLevi Logical variable to allow contour lines. The default is
 #' TRUE.
-#' @param setcolor Select the color palette to build the heatmat. The options
-#' available are:  default, terrain, rainbow, heat, topo and cm.
+#' @param setcolor Select the color palette to build the heatmat. There is
+#'two options the **Multicolor** has 20 color levels combined. The
+#'**Two colors** has two types of color and the options available are: *purple_pink*,
+#'*green_blue*, *blue_yellow*, *pink_green*, *orange_purple*, *green_marine*.
 #' @details Integrates the biological network and gene expression levels
 #' (or other type of data)
-#' @author José Rafael Pilan (rafael.pilan@unesp.br)
+#' @author Isabelle Mira da Silva (isabelle.silva@unesp.br), José Rafael Pilan (rafael.pilan@unesp.br)
 #' @return Return a ggplot object and print a image (heatmat).
 #' @examples
 #'template_network <- file.path(system.file(package="levi"),"extdata",
 #'    "medusa.dat", fsep = .Platform$file.sep)
+#'
 #'template_expression <- file.path(system.file(package="levi"),
 #'    "extdata","expression.dat", fsep = .Platform$file.sep)
-#'landscape <- levi(networkCoordinatesInput = template_network,
+#'
+#'multicolor <- levi(networkCoordinatesInput = template_network,
 #'    expressionInput = template_expression, fileTypeInput = "dat",
 #'    geneSymbolnput = "ID",
 #'    readExpColumn=readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"),
 #'    contrastValueInput = 50, resolutionValueInput  = 50, zoomValueInput = 50,
-#'    smoothValueInput = 50, expressionLog = FALSE, contourLevi = TRUE,
-#'    setcolor = "default")
+#'    smoothValueInput = 50, expressionLog = FALSE, contourLevi = TRUE)
+#'
+#'twocolors <- levi(networkCoordinatesInput = template_network,
+#'    expressionInput = template_expression, fileTypeInput = "dat",
+#'    geneSymbolnput = "ID",
+#'    readExpColumn = readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"),
+#'    setcolor = "pink_green", contourLevi = FALSE)
 #'@export
 levi <- function(expressionInput, fileTypeInput, networkCoordinatesInput,
     networkInteractionsInput = NA, geneSymbolnput, readExpColumn,

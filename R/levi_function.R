@@ -1,16 +1,35 @@
 levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
     networkInteractionsInput, geneSymbolnput, readExpColumn, contrastValueInput,
     zoomValueInput, resolutionValueInput, smoothValueInput, expressionLog,
-    contourLevi, setcolor){
+    contourLevi, setcolor) {
 
-    colorSet <- function(x, colorType=c("default", "terrain", "rainbow",
-    "heat", "topo", "cm")){
+    colorSet <- function(x, colorType=c("default", "terrain", "rainbow","heat",
+        "topo", "cm", "purple_pink", "green_blue", "blue_yellow", "pink_green",
+        "orange_purple", "green_marine")) {
         colorType <- match.arg(colorType)
         defaultColors <- function(n) {
-        c("#180052", "#0c0083","#0000b4", "#0000e4","#0010ff", "#0041ff",
-        "#0072ff", "#00A3FF", "#00D4FF", "#00FF49","#5AFF00", "#FFE400",
-        "#FFC400", "#FFA300", "#FF8300", "#FF6200", "#FF4100", "#FF2100",
-        "#FF0000", "#E40000")
+            c("#180052", "#0c0083","#0000b4", "#0000e4","#0010ff", "#0041ff",
+              "#0072ff", "#00A3FF", "#00D4FF", "#00FF49","#5AFF00", "#FFE400",
+              "#FFC400", "#FFA300", "#FF8300", "#FF6200", "#FF4100", "#FF2100",
+              "#FF0000", "#E40000")
+        }
+        purple_pink <- function(n) {
+            c("#4e5052", "#b387e6", "#ff0000")
+        }
+        green_blue <- function(n) {
+            c("#4e5052", "#a4db56", "#1d02c9")
+        }
+        blue_yellow <- function(n) {
+            c("#4e5052", "#27b0cf", "#ffec2b")
+        }
+        orange_purple <- function(n){
+            c("#4e5052", "#fcbb63", "#7300c4")
+        }
+        green_marine <- function(n){
+            c("#4e5052", "#5df0b0", "#360d94")
+        }
+        pink_green <- function(n){
+            c("#4e5052", "#e854d9", "#90db56")
         }
         color_list <- list(
             default = defaultColors,
@@ -18,11 +37,25 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
             rainbow = rainbow,
             heat = heat.colors,
             topo = topo.colors,
-            cm = cm.colors
+            cm = cm.colors,
+            purple_pink = purple_pink,
+            green_blue = green_blue,
+            blue_yellow = blue_yellow,
+            orange_purple = orange_purple,
+            green_marine = green_marine,
+            pink_green = pink_green
         )
-        colorSetRange <- color_list[[colorType]](20)
+
+        if ((colorType == "default") || (colorType == "terrain") ||
+            (colorType == "rainbow") || (colorType == "heat") ||
+           (colorType == "topo") || (colorType == "cm")) {
+            colorSetRange <- color_list[[colorType]](20)
+        } else {
+
+            colorSetRange <- color_list[[colorType]](3)
 
         return(colorSetRange)
+        }
     }
 
     fileTypeFun <- function(x, filecheck=c("dat", "dyn", "stg", "net")){
@@ -139,8 +172,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                                 {gsub("TRUE", "T", x)}),
                                 stringsAsFactors = FALSE)
                             nodes <-rbind(nodes, nodes_ft)
-                        }
-
+                            }
 
                         for (i in seq_len(nrow(edges_sl))) {
                             edges_rt <- read.table(text =
@@ -152,7 +184,6 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                             edges <-rbind(edges, edges_ft)
 
                         }
-
 
 
                         net_mg<- merge(edges, nodes, by.x = "V1", by.y = "V1",
@@ -292,7 +323,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
 
 
         if (fileType == "dat"){
-            edges <-select(edges, -3)
+            edges <-select(edges, 1,2)
             nodes <- as.data.frame(nodes)
             nodes[, c(2)] <- sapply(nodes[, c(2)], as.double)
         }
@@ -534,7 +565,7 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
             landgraphChart <-ggplot(data = landgraphFinal,
                 aes(x = Var1, y = Var2))+
                 geom_raster(aes(fill = z), interpolate = TRUE,
-                hjust = 0.5, vjust = 0.5) +
+                            hjust = 0.5, vjust = 0.5) +
                 scale_fill_gradientn(colours=colorSet(x, setcolor),
                 values=c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45,
                 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1),
@@ -563,7 +594,6 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
         }
         landgraphChart <- landgraphChart + coord_fixed(ratio = 1)
         print(landgraphChart)
-
     }
 }
 

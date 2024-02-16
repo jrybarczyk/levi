@@ -11,7 +11,8 @@
 #' environment the argument required "FALSE". The default is "FALSE"
 #' @return return a GUI
 #' @export
-#' @author José Rafael Pilan <rafael.pilan@unesp.br>
+#' @author José Rafael Pilan <rafael.pilan@unesp.br> &
+#' Isabelle Mira da Silva (isabelle.silva@unesp.br)
 #' @examples
 #' LEVIui(browser)
 #' #LEVIui(browser=TRUE)  #Launch Levi to Browser.
