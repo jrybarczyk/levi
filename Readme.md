@@ -38,11 +38,11 @@ The **levi** supports several extensions of biological network files (\*.net, \*
 
 | Extension | File Type | Link |
 |-----------|-----------|-----|
-| dat       | Medusa (DAT) | [Example DAT](https://bit.ly/2sj6RJh) |
-| dyn       | RedeR (DYN)  | [Example DYN](https://bit.ly/2IJGaZ7) |
-| net       | Pajek (NET)  | [Example NET](https://bit.ly/2IKzaLv) |
-| stg       | STRING / STITCH | [Example coordinates](https://bit.ly/2xjnaLU) |
-| stg       | STRING / STITCH | [Example interactions](https://bit.ly/2J2OToH)|
+| dat       | Medusa (DAT) | [Example DAT](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/medusa.dat) |
+| dyn       | RedeR (DYN)  | [Example DYN](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/RedeR.dyn) |
+| net       | Pajek (NET)  | [Example NET](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/Pajek.net) |
+| stg       | STRING / STITCH | [Example coordinates](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/string_network_coordinates.txt) |
+| stg       | STRING / STITCH | [Example interactions](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/string_interactions.tsv)|
 
 ## Viewing Modes
 
