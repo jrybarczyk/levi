@@ -1,4 +1,5 @@
-<img src="/shields/availability/devel/levi.svg" alt="Platform availability badge" title="Whether the package is available on all platforms; click for details.">
+[![Bioconductor](https://bioconductor.org/shields/downloads/release/levi.svg)](LINK_PARA_O_SEU_PACOTE_NO_BIOCONDUCTOR)
+
 
 # levi - Landscape Expression Visualization Interface
 
