@@ -175,3 +175,5 @@ twocolors <- levi(networkCoordinatesInput = template_network,
                 setcolor = "pink_green", contourLevi = FALSE)
 
 ```
+## Information on Bioconductor
+![]()
