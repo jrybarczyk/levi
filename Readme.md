@@ -1,4 +1,4 @@
-[![Bioconductor](https://bioconductor.org/shields/availability/release/levi.svg)][![Bioconductor](https://bioconductor.org/shields/downloads/release/levi.svg)]
+![Bioconductor](https://bioconductor.org/shields/availability/release/levi.svg)![Bioconductor](https://bioconductor.org/shields/downloads/release/levi.svg)![Bioconductor](https://bioconductor.org/shields/years-in-bioc/levi.svg)![Bioconductor](![Bioconductor](https://bioconductor.org/shields/availability/release/levi.svg))![Bioconductor](https://bioconductor.org/shields/dependencies/release/levi.svg)
 
 
 # levi - Landscape Expression Visualization Interface
