@@ -111,3 +111,67 @@ area in the **landscape**. The user can save the table in a csv file
     the total time required will be longer.
     + **Zoom** - Zoom value for the **landscape**. The variable range is 
     1 to 100. The default value is 50.
+
+## *Script*
+
+The **levi** scripting mode also has the settings for **landscape** building 
+(see example below).
+
+```r
+library(levi)
+
+template_network <- file.path(system.file(package="levi"),"extdata",
+                                "medusa.dat", fsep = .Platform$file.sep)
+
+template_expression <- file.path(system.file(package="levi"),
+                                "extdata","expression.dat", 
+                                fsep = .Platform$file.sep)
+
+multicolor <- levi(networkCoordinatesInput = template_network,
+                expressionInput = template_expression, fileTypeInput = "dat",
+                geneSymbolnput = "ID", 
+                readExpColumn=
+                readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"), 
+                contrastValueInput = 50, resolutionValueInput  = 50, 
+                zoomValueInput = 50, smoothValueInput = 50, contourLevi = TRUE)
+
+twocolors <- levi(networkCoordinatesInput = template_network,
+                expressionInput = template_expression, fileTypeInput = "dat",
+                geneSymbolnput = "ID", 
+                readExpColumn=
+                readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"),
+                setcolor = "pink_green", contourLevi = FALSE)
+
+```
+The script mode allows the user to compare combinations between two 
+experiments in the gene expression levels file. The readExpColumn function 
+can be used to this task to inform the combination separating by dash (-) 
+and to add more combinations separate by comma (,).
+
+```r
+library(levi)
+base <- readExpColumn("TumorFormerSmoker-NormalFormerSmoker", 
+                        "TumorNeverSmoker-TumorNeverSmoker")
+
+template_network <- file.path(system.file(package="levi"),"extdata",
+                                "medusa.dat", fsep = .Platform$file.sep)
+
+template_expression <- file.path(system.file(package="levi"),
+                                "extdata","expression.dat", 
+                                fsep = .Platform$file.sep)
+
+multicolor <- levi(networkCoordinatesInput = template_network,
+                    expressionInput = template_expression, 
+                    fileTypeInput = "dat",
+                    geneSymbolnput = "ID", readExpColumn= base, 
+                    contrastValueInput = 50, resolutionValueInput  = 50, 
+                    zoomValueInput = 50, smoothValueInput = 50, 
+                    contourLevi = FALSE)
+
+twocolors <- levi(networkCoordinatesInput = template_network,
+                expressionInput = template_expression, fileTypeInput = "dat",
+                geneSymbolnput = "ID", 
+                readExpColumn= base,
+                setcolor = "pink_green", contourLevi = FALSE)
+
+```
