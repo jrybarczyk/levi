@@ -112,7 +112,7 @@ area in the **landscape**. The user can save the table in a csv file
     + **Zoom** - Zoom value for the **landscape**. The variable range is 
     1 to 100. The default value is 50.
 
-## *Script*
+## Script
 
 The **levi** scripting mode also has the settings for **landscape** building 
 (see example below).
