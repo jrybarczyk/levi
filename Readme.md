@@ -176,4 +176,4 @@ twocolors <- levi(networkCoordinatesInput = template_network,
 
 ```
 ## Information on Bioconductor
-![]()
+![](https://github.com/jrybarczyk/levi/blob/devel/miscellaneous/Rplot.png)
