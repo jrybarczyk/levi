@@ -33,7 +33,7 @@ Two files are required to use **levi**:
 
 ### Gene Expression Levels
 
-This file should contain the genes of interest, previously normalized by the user. The expression file must have a column with gene identification (Gene Symbol, Entrez, etc.) and at least one column with gene expression levels (treatment, case, control, etc.). The user can compare expression levels between samples if there are more columns containing these data.
+This file should contain the genes of interest, previously normalized by the user. The expression file must have a column with gene identification (Gene Symbol, Entrez, etc.) and at least one column with gene expression levels (treatment, case, control, etc.) [see example](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/expression.dat). The user can compare expression levels between samples if there are more columns containing these data.
 
 If the expression file does not have values for all genes in the network, a message will be displayed showing a log file path to a temporary directory with gene names. In the **landscape** construction, genes with no expression value will be displayed with values close to 0.5, demonstrating that there were no changes (down-regulated or up-regulated genes).
 
