@@ -11,6 +11,8 @@
 **Maintainer:** José L. Rybarczyk-Filho
 
 ## Installation
+Levi is also accessible on the bioconductor.org platform.
+
 ```r
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
