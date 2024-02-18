@@ -191,5 +191,5 @@ twocolors <- levi(networkCoordinatesInput = template_network,
                 setcolor = "pink_green", contourLevi = FALSE)
 
 ```
-## Information on Bioconductor
+## Information about downloads of levi on Bioconductor.org
 ![](https://github.com/jrybarczyk/levi/blob/devel/miscellaneous/Rplot.png)
