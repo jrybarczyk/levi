@@ -1,9 +1,9 @@
+<img src="/shields/availability/devel/levi.svg" alt="Platform availability badge" title="Whether the package is available on all platforms; click for details.">
+
 # levi - Landscape Expression Visualization Interface
 
-**Authors:** Isabelle M. da Silva, José R. Pilan, Agnes A. S. Takeda, Jose L. Rybarczyk-Filho  
-**Package Version:** `r pkg_ver('levi')`  
-**Date:** `r doc_date()`  
-**Vignette:** [Using levi](#using-levi)  
+**Authors:**  José R. Pilan, Isabelle M. da Silva, Agnes A. S. Takeda, Jose L. Rybarczyk-Filho  
+
 
 ## Overview
 
