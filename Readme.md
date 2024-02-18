@@ -57,9 +57,6 @@ library(levi)
 LEVIui(browser=TRUE)  # Launch Levi to Browser.
 LEVIui(browser=FALSE) # Launch Levi to R environment.
 ```
-
-```
-
 <center><img src="https://github.com/jrybarczyk/levi/blob/master/vignettes/Newlevi.png" width=150%></center>
 <center> <b>Figure 2: </b> Graphical User Interface (GUI).</center>
 
