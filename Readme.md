@@ -8,7 +8,16 @@
 # levi - Landscape Expression Visualization Interface
 
 **Authors:**  José R. Pilan, Isabelle M. da Silva, Agnes A. S. Takeda, Jose L. Rybarczyk-Filho  
+**Maintainer:** José L. Rybarczyk-Filho
 
+## Installation
+```r
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("levi")
+
+```
 
 ## Overview
 
