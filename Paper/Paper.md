@@ -8,21 +8,21 @@ tags:
 
 authors: 
 - name: José Rafael Pilan 
-  affiliation: "1" 
-  orcid: 0000-0002-9403-5030 
+   affiliation: "1" 
+   orcid: 0000-0002-9403-5030 
 - name: Isabelle M. da Silva 
-  affiliation: "1" 
-  orcid: 0000-0003-1435-6545 
+   affiliation: "1" 
+   orcid: 0000-0003-1435-6545 
 - name: Agnes A. Sekijima Takeda 
-  affiliation: "1" 
-  orcid: 0000-0001-5000-6652 
+   affiliation: "1" 
+   orcid: 0000-0001-5000-6652 
 - name: José L. Rybarczyk-Filho 
-  affiliation: "1, 2" 
-  orcid: 0000-0002-0757-3608 
+   affiliation: "1, 2" 
+   orcid: 0000-0002-0757-3608 
 
 affiliations: 
  - name: Departament of Biophysics and Pharmacology, Institute of Bioscience of Botucatu, Universidade Estadual Paulista (UNESP) 
-   index: 1 
+    index: 1 
  - name: For correspondence, contact [jose.luiz\@unesp.br](mailto:jose.luiz@unesp.br){.email}
 
 date: "20 february 2024" 
