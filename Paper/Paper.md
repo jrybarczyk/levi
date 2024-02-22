@@ -23,7 +23,7 @@ authors:
 affiliations: 
  - name: Departament of Biophysics and Pharmacology, Institute of Bioscience of Botucatu, Universidade Estadual Paulista (UNESP) 
    index: 1 
- - name: For correspondence, contact [jose.luiz\@unesp.br](mailto:jose.luiz@unesp.br)
+ - name: For correspondence, contact jose.luiz@unesp.br
 
 date: "20 february 2024" 
 bibliography: paper.bib
