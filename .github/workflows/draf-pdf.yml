@@ -8,21 +8,21 @@ jobs:
     runs-on: ubuntu-latest
     name: Paper Draft
     steps:
-      - name: List contents of Paper directory
-        run: ls -R Paper
       - name: Checkout
         uses: actions/checkout@v4
+
+      # Agora, este comando será executado após o checkout, garantindo que o diretório 'Paper' já esteja disponível.
+      - name: List contents of Paper directory
+        run: ls -R Paper
+
       - name: Build draft PDF
         uses: openjournals/openjournals-draft-action@master
         with:
           journal: joss
-          # This should be the path to the paper within your repo.
           paper-path: Paper/Paper.md
+
       - name: Upload
         uses: actions/upload-artifact@v1
         with:
           name: Paper
-          # This is the output path where Pandoc will write the compiled
-          # PDF. Note, this should be the same directory as the input
-          # paper.md
           path: Paper/Paper.pdf
