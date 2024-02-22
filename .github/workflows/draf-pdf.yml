@@ -1,9 +1,4 @@
-# From https://github.com/marketplace/actions/open-journals-pdf-generator
-on:
-  push:
-    branches: [ paper ]
-  pull_request:
-    branches: [ paper ]
+on: [push]
 
 jobs:
   paper:
@@ -11,7 +6,7 @@ jobs:
     name: Paper Draft
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build draft PDF
         uses: openjournals/openjournals-draft-action@master
         with:
@@ -25,9 +20,4 @@ jobs:
           # This is the output path where Pandoc will write the compiled
           # PDF. Note, this should be the same directory as the input
           # paper.md
-          path: Paper/Paper.pdf
-      ### Cannot autosave PDF probably because it is a private rep. ###
-      - name: save pdf to repo
-        uses: jrybarczyk/git-auto-commit-action@v4
-        with:
-          commit_message: Saved new PDF of paper
+          path: paper.pdf
