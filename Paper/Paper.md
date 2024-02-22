@@ -1,6 +1,6 @@
 ---
-
 title: '**levi**: an R package for landscape expression visualization' 
+
 tags: 
  - Biological Networks 
  - Gene Expression Levels 
@@ -27,6 +27,7 @@ affiliations:
 
 date: "20 february 2024" 
 bibliography: paper.bib
+---
 
 # Summary
 
@@ -40,6 +41,7 @@ The high throughput technologies have been developed in the last decades for obt
 
 Levi was developed in R language, using the Shiny package to create an graphical user interface (GUI). Normalized gene expression data can be adjusted to logarithmic scale for better visualization of the expression levels projected onto the network. The network upload requires files in formats Medusa (DAT), RedeR (DYN), Pajek (NET) or STRING / STITCH. The GUI mode allows the user the landscape visualization from a single gene expression data or a comparison of data expression. Moreover, it allows the interaction with the final image, selecting areas in the landscape to identify the genes in a chosen region. Levi settings contrast, resolution, smoothing, zoom and color palettes are also available. The script mode enables the batch execution to create landscapes for different comparisons between sample types for a single pathway/network. Both modes export the landscapes as images in TIFF, BMP, JPEG and PNG formats.
 
+
 ![Landscape analysis to Non-Small Cell Lung Cancer signaling pathway. (A) Biological network for Non-Small Cell Lung Cancer. (B) Landscape for normal lung and never smoked. (C) Landscape for tumor and current smoker. (D) Landscape for tumor and former smoker. (E) Landscape for tumor and never smoked.](figure1.png)
 
 # Case Study
@@ -50,7 +52,7 @@ The data processing in levi allowed the visualization of the expression data ont
 
 # Conclusion
 
-The landscape visualization from the levi, result of the integration between the expression data and the network, allows a more complete qualitative analysis of the biological problem due the better visualization of the upregulated and downregulated genes as well as their interactions with the neighborhood.
+The landscape visualization, provided by 'levi'— a tool available on the Bioconductor.org platform — results from the integration of expression data and the network. This allows for a more comprehensive qualitative analysis of the biological problem, due to the improved visualization of both upregulated and downregulated genes, as well as their interactions with the surrounding network.
 
 # Funding
 
