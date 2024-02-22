@@ -9,7 +9,7 @@ jobs:
     name: Paper Draft
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       # Agora, este comando será executado após o checkout, garantindo que o diretório 'Paper' já esteja disponível.
       - name: List contents of Paper directory
@@ -24,5 +24,13 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v1
         with:
-          name: Paper
-          path: Paper.pdf
+          name: paper
+          # This is the output path where Pandoc will write the compiled
+          # PDF. Note, this should be the same directory as the input
+          # paper.md
+          path: paper/paper.pdf
+      ### Cannot autosave PDF probably because it is a private rep. ###
+      - name: save pdf to repo
+        uses: levi/git-auto-commit-action@v4
+        with:
+          commit_message: Saved new PDF of paper
