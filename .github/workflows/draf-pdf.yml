@@ -1,4 +1,4 @@
-on: [paper]
+on: [push]
 
 jobs:
   paper:
