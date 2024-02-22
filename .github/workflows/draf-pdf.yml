@@ -25,4 +25,4 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: Paper
-          path: Paper/Paper.pdf
+          path: Paper.pdf
