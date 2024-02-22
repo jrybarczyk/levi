@@ -5,6 +5,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Paper Draft
     steps:
+      - name: List contents of Paper directory
+        run: ls -R Paper
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build draft PDF
