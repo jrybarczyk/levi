@@ -48,7 +48,7 @@ Levi was developed in R language, using the Shiny package to create an graphical
 
 To illustrate the levi application, we built a Non-Small Cell Lung Cancer (NSCLC) network, which was obtained by prospection of the genes from the Non-Small Cell Lung Cancer signaling pathway (map05223) from the Kyoto Enciclopedia of Genes and Genomes(KEGG) database [@Kanehisa2019]. These genes were used as input for the STRING v11 [@Szklarczyk2018] to built the NSCLC network using the following parameters: active interaction sources - Experiments and database, confidence score 0.40 (considered medium confidence) Figure (A). The files "network-coordinates" and "as simple tabular text output" were selected and used as input for levi package. Then, we prepared the expression file. In our example, we selected a gene expression dataset of lung adenocarcinoma and lung tissue from current, former and never smokers (GSE10072) [@Landi2008] available in Gene Expression Omnibus (GEO) [@Barrett2013]. Before the upload in levi, the data was previously normalized with MAS5 and the probes were mapped with gene symbol using the R packages affy and hgu133a2.db, respectively.
 
-The data processing in levi allowed the visualization of the expression data onto the biological newtork to evidence difference among samples (Figure 1 (B-E)). The comparison among images indicated a difference of colors in one area that corresponds to the  E2F2  and  CDK4 genes, which were more expressed in the samples of lung cancer patients than in the control samples. This result was corroborated by previous studies, which also suggested these genes as potential biomarkers for prognosis in detection of NSCLC [@Chen2015, @Wu2011].
+The data processing in levi allowed the visualization of the expression data onto the biological newtork to evidence difference among samples (Figure 1 (B-E)). The comparison among images indicated a difference of colors in one area that corresponds to the  E2F2  and  CDK4 genes, which were more expressed in the samples of lung cancer patients than in the control samples. This result was corroborated by previous studies, which also suggested these genes as potential biomarkers for prognosis in detection of NSCLC [@Du2022, @Wu2011].
 
 # Conclusion
 
@@ -57,3 +57,6 @@ The landscape visualization, provided by 'levi'— a tool available on the Bioco
 # Funding
 
 This study was supported by CNPq 473789/2013-2, 134469/2016-0, 134467/2016-7 and financed in part by the Coordenação de Aperfeiçoamento de Pessoal de Nível Superior - Brasil (CAPES) - Finance Code 001.
+
+
+# References
