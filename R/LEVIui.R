@@ -33,5 +33,3 @@ tryCatch({
 error = function(e) {print("Parameter must be TRUE or FALSE")
 }
 )}
-
-
