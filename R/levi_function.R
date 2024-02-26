@@ -200,7 +200,6 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                         edges <- edges
                         },
 
-
                 dyn={
                         tf <- tempfile(tmpdir = tdir <- tempdir())
                         dyn_files <- unzip(networkNodes, exdir = tdir)
@@ -596,4 +595,3 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
         print(landgraphChart)
     }
 }
-
