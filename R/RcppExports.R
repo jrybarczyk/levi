@@ -12,4 +12,3 @@ matrix_entrada <- function(coordPiso, SignalOut, signalExp, signalCtrl, coord, r
 matrix_saida <- function(matrixIn, resolutionValue, smoothValue, gamaValue, increase, zoomValue, h) {
     .Call('_levi_matrix_saida', PACKAGE = 'levi', matrixIn, resolutionValue, smoothValue, gamaValue, increase, zoomValue, h)
 }
-
