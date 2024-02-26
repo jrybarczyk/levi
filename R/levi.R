@@ -95,4 +95,3 @@ levi <- function(expressionInput, fileTypeInput, networkCoordinatesInput,
             smoothValueInput, expressionLog, contourLevi, setcolor)
 
 }
-
