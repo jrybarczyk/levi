@@ -36,7 +36,7 @@ devtools::install_github("jrybarczyk/levi")
 
 ## Overview
 
-**`levi`** (Landscape Expression Visualization Interface)** is an R package developed to enable the visualization of gene expression projections on a biological network. It is based on two other software: Viacomplex (This tool is no longer supported)  and Galant (This tool is no longer supported), which corresponds to a plugin for Cytoscape 2.x software.
+**`levi`** **(Landscape Expression Visualization Interface)** is an R package developed to enable the visualization of gene expression projections on a biological network. It is based on two other software: Viacomplex (This tool is no longer supported)  and Galant (This tool is no longer supported), which corresponds to a plugin for Cytoscape 2.x software.
 
 Two files are required to use `levi`: 
 - The file containing the expression levels of the genes.
