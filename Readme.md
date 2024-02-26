@@ -36,9 +36,9 @@ devtools::install_github("jrybarczyk/levi")
 
 ## Overview
 
-**levi (Landscape Expression Visualization Interface)** is an R package developed to enable the visualization of gene expression projections on a biological network. It is based on two other software: Viacomplex (This tool is no longer supported)  and Galant(This tool is no longer supported), which corresponds to a plugin for Cytoscape 2.x software.
+**`levi`** (Landscape Expression Visualization Interface)** is an R package developed to enable the visualization of gene expression projections on a biological network. It is based on two other software: Viacomplex (This tool is no longer supported)  and Galant (This tool is no longer supported), which corresponds to a plugin for Cytoscape 2.x software.
 
-Two files are required to use **levi**: 
+Two files are required to use `levi`: 
 - The file containing the expression levels of the genes.
 - A file containing the biological network.
 
@@ -58,7 +58,7 @@ Data sets of gene expression can be obtained from online databases:
 
 ### Biological Network
 
-The **levi** supports several extensions of biological network files (\*.net, \*.dyn, \*.txt, \*.dat). The user should build the biological network using specific tools such as Cytoscape, RedeR, Medusa, etc. It is recommended to obtain interaction data/biological associations from online repositories:
+The `levi` supports several extensions of biological network files (\*.net, \*.dyn, \*.txt, \*.dat). The user should build the biological network using specific tools such as Cytoscape, RedeR, Medusa, etc. It is recommended to obtain interaction data/biological associations from online repositories:
 - [STRING database](https://string-db.org/)
 - [StarBase](http://starbase.sysu.edu.cn/)
 - [miRBase](http://www.mirbase.org/)
@@ -75,7 +75,7 @@ The **levi** supports several extensions of biological network files (\*.net, \*
 
 ## Viewing Modes
 
-**levi** has two viewing modes: **Graphical User Interface (GUI)** and **script**.
+`levi` has two viewing modes: **Graphical User Interface (GUI)** and **script**.
 
 ### Graphical User Interface (GUI)
 
@@ -143,7 +143,7 @@ area in the **landscape**. The user can save the table in a csv file
 
 ## Script
 
-The **levi** scripting mode also has the settings for **landscape** building 
+The `levi` scripting mode also has the settings for **landscape** building 
 (see example below).
 
 ```r
