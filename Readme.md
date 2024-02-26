@@ -11,7 +11,9 @@
 **Maintainer:** José L. Rybarczyk-Filho
 
 ## Installation
-Levi is also accessible on the bioconductor.org platform.
+`levi` is accessible on the bioconductor.org platform.
+
+To install this package, start R and enter:
 
 ```r
 if (!require("BiocManager", quietly = TRUE))
@@ -20,12 +22,23 @@ if (!require("BiocManager", quietly = TRUE))
 BiocManager::install("levi")
 
 ```
+### Alternative installation method using devtools
+If you prefer, you can also install `levi` using `devtools`. This method might be useful if you want to install the development version directly from a **GitHub repository** or another source. To install using `devtools`, you'll first need to ensure that `devtools` is installed. If it's not, you can install it using the following command:
+
+```r
+if (!require("devtools", quietly = TRUE))
+    install.packages("devtools")
+
+devtools::install_github("jrybarczyk/levi")
+
+```
+
 
 ## Overview
 
-**levi (Landscape Expression Visualization Interface)** is an R package developed to enable the visualization of gene expression projections on a biological network. It is based on two other software: Viacomplex (@Castro2009) and Galant (@Camilo2013), which corresponds to a plugin for Cytoscape software.
+**`levi`** **(Landscape Expression Visualization Interface)** is an R package developed to enable the visualization of gene expression projections on a biological network. It is based on two other software: Viacomplex (This tool is no longer supported)  and Galant (This tool is no longer supported), which corresponds to a plugin for Cytoscape 2.x software.
 
-Two files are required to use **levi**: 
+Two files are required to use `levi`: 
 - The file containing the expression levels of the genes.
 - A file containing the biological network.
 
@@ -45,7 +58,7 @@ Data sets of gene expression can be obtained from online databases:
 
 ### Biological Network
 
-The **levi** supports several extensions of biological network files (\*.net, \*.dyn, \*.txt, \*.dat). The user should build the biological network using specific tools such as Cytoscape, RedeR, Medusa, etc. It is recommended to obtain interaction data/biological associations from online repositories:
+The `levi` supports several extensions of biological network files (\*.net, \*.dyn, \*.txt, \*.dat). The user should build the biological network using specific tools such as Cytoscape, RedeR, Medusa, etc. It is recommended to obtain interaction data/biological associations from online repositories:
 - [STRING database](https://string-db.org/)
 - [StarBase](http://starbase.sysu.edu.cn/)
 - [miRBase](http://www.mirbase.org/)
@@ -62,7 +75,7 @@ The **levi** supports several extensions of biological network files (\*.net, \*
 
 ## Viewing Modes
 
-**levi** has two viewing modes: **Graphical User Interface (GUI)** and **script**.
+`levi` has two viewing modes: **Graphical User Interface (GUI)** and **script**.
 
 ### Graphical User Interface (GUI)
 
@@ -130,7 +143,7 @@ area in the **landscape**. The user can save the table in a csv file
 
 ## Script
 
-The **levi** scripting mode also has the settings for **landscape** building 
+The `levi` scripting mode also has the settings for **landscape** building 
 (see example below).
 
 ```r
