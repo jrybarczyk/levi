@@ -10,6 +10,17 @@
 **Authors:** José R. Pilan, Isabelle M. da Silva, Agnes A. S. Takeda, Jose L. Rybarczyk-Filho
 **Maintainer:** José L. Rybarczyk-Filho
 
+## Summary
+The integration of biological data emerges as a powerful tool for extracting information capable
+9 of describing the biological system in greater detail. The use of transcriptomic data has become
+10 ubiquitous among researchers in addressing various biological questions. In the past decade, we
+11 have witnessed the integration of biological network analysis to enrich and complement these
+12 responses. This study proposes the synergistic integration of transcriptomic data and networks,
+13 adopting an approach analogous to the Heatmap technique. The Landscape Expression
+14 Visualization Interface (LEVI) is an open-source package developed for the R environment,
+15 aiming to provide an enhanced visualization of gene expression projection onto a biological
+16 network.
+
 ## Installation
 `levi` is accessible on the bioconductor.org platform.
 
