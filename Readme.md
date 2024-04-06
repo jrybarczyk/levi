@@ -226,9 +226,9 @@ twocolors <- levi(networkCoordinatesInput = template_network,
                 setcolor = "pink_green", contourLevi = FALSE)
 
 ```
-
-[more examples](https://github.com/jrybarczyk/levi/blob/paper/Case/Case.pdf)
 `levi` offers a versatile solution for gene expression and biological network analysis, catering to a wide range of user preferences and technical expertise levels.
+[more examples](https://github.com/jrybarczyk/levi/blob/paper/Case/Case.pdf)
+
 ## Information about downloads of levi on Bioconductor.org
 ![](https://github.com/jrybarczyk/levi/blob/paper/miscellaneous/Rplot.png)
 
