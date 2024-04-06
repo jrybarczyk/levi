@@ -41,8 +41,8 @@ The GUI mode is designed to make the package approachable for users who may not 
 For users experienced in R or those requiring quicker, possibly automated analyses, `levi` can be operated through scripts. This method offers greater flexibility and customization, making it suitable for integrating `levi` into broader data analysis workflows. Scripting can significantly save time, especially when dealing with large datasets or conducting batch analyses.
 
 `levi` requires two files for use: 
-- A file containing the expression levels of the genes (microarray , RNA-seq, Single Cell data).
-- A file containing the biological network.
+- A file containing the expression levels of the genes (microarray , RNA-seq, Single Cell data)[See example](https://github.com/jrybarczyk/levi/blob/master/inst/extdata/expression.dat).
+- A file containing the biological network.[See example](https://github.com/jrybarczyk/levi/blob/master/inst/extdata/medusa.dat)
 
 ## Files
 
