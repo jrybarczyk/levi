@@ -84,7 +84,7 @@ The `levi` supports several extensions of biological network files (\*.net, \*.d
 
 ### Graphical User Interface (GUI)
 
-levi is developed with a Graphical User Interface (GUI) leveraging the Shiny package, enabling it to be launched both within the R environment and the user's default web browser. Choosing Shiny for the GUI aims to provide a highly interactive experience, where users can intuitively manipulate data and visual settings. This makes the analysis of gene expression in biological networks accessible even to those who may not be familiar with programming in R, facilitating data exploration and interpretation in a visual manner.
+levi is developed with a Graphical User Interface (GUI) leveraging the Shiny package, enabling it to be launched both within the RStudio environment and the user's default web browser. Choosing Shiny for the GUI aims to provide a highly interactive experience, where users can intuitively manipulate data and visual settings. This makes the analysis of gene expression in biological networks accessible even to those who may not be familiar with programming in R, facilitating data exploration and interpretation in a visual manner.
 
 Furthermore, the core analysis of levi is implemented in Rcpp (C++), a strategic decision to take advantage of the efficiency and performance this language offers. This hybrid approach ensures that while the Shiny-based GUI manages user interaction in a fluid and responsive manner, heavy data processing is optimally executed in the backend in Rcpp. This results in a powerful tool that combines ease of use with the capability to perform complex and computationally intensive analyses.
 
