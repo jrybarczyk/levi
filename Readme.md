@@ -52,7 +52,7 @@ This file should contain the genes of interest, previously normalized by the use
 
 If the expression file does not have values for all genes in the network, a message will be displayed showing a log file path to a temporary directory with gene names. In the **landscape** construction, genes with no expression value will be displayed with values close to 0.5, demonstrating that there were no changes (down-regulated or up-regulated genes).
 
-Data sets of gene expression can be obtained from online databases:
+Datasets of gene expression can be obtained from online databases:
 - [Gene Expression Omnibus (GEO)](https://www.ncbi.nlm.nih.gov/geo/)
 - [Array Express](https://www.ebi.ac.uk/arrayexpress/)
 - [The Cancer Genome Atlas (TCGA)](https://cancergenome.nih.gov/)
