@@ -7,7 +7,7 @@
 
 # levi - Landscape Expression Visualization Interface
 
-**Authors:**  José R. Pilan, Isabelle M. da Silva, Agnes A. S. Takeda, Jose L. Rybarczyk-Filho  
+**Authors:** José R. Pilan, Isabelle M. da Silva, Agnes A. S. Takeda, Jose L. Rybarczyk-Filho
 **Maintainer:** José L. Rybarczyk-Filho
 
 ## Installation
@@ -20,26 +20,28 @@ if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
 BiocManager::install("levi")
-
 ```
+
 ### Alternative installation method using devtools
-If you prefer, you can also install `levi` using `devtools`. This method might be useful if you want to install the development version directly from a **GitHub repository** or another source. To install using `devtools`, you'll first need to ensure that `devtools` is installed. If it's not, you can install it using the following command:
+If you prefer, you can also install `levi` using `devtools`. This method might be useful if you want to install the development version directly from a GitHub repository or another source. To install using `devtools`, you'll first need to ensure that `devtools` is installed. If it's not, you can install it using the following command:
 
 ```r
 if (!require("devtools", quietly = TRUE))
     install.packages("devtools")
 
 devtools::install_github("jrybarczyk/levi")
-
 ```
-
 
 ## Overview
 
-**`levi`** **(Landscape Expression Visualization Interface)** is an R package developed to enable the visualization of gene expression projections on a biological network. It is based on two other software: Viacomplex (This tool is no longer supported)  and Galant (This tool is no longer supported), which corresponds to a plugin for Cytoscape 2.x software.
+**`levi`** (**Landscape Expression Visualization Interface**) is an R package developed to enable the visualization of gene expression projections on a biological network. It leverages two main modes of interaction: a Graphical User Interface (GUI) powered by the Shiny package for an accessible, user-friendly experience, and script-based usage for advanced analysis and automation. 
 
-Two files are required to use `levi`: 
-- The file containing the expression levels of the genes.
+The GUI mode is designed to make the package approachable for users who may not be familiar with coding in R or prefer a visual approach to data analysis. It allows users to upload data, adjust visualization parameters, and interact with the results intuitively. This accessibility facilitates the exploration and interpretation of gene expression data within biological networks.
+
+For users experienced in R or those requiring quicker, possibly automated analyses, `levi` can be operated through scripts. This method offers greater flexibility and customization, making it suitable for integrating `levi` into broader data analysis workflows. Scripting can significantly save time, especially when dealing with large datasets or conducting batch analyses.
+
+`levi` builds upon the foundations of previous tools (Viacomplex and Galant) and requires two files for use: 
+- A file containing the expression levels of the genes.
 - A file containing the biological network.
 
 ## Files
@@ -56,14 +58,17 @@ Data sets of gene expression can be obtained from online databases:
 - [The Cancer Genome Atlas (TCGA)](https://cancergenome.nih.gov/)
 - [Sequence Read Archive (SRA)](https://www.ncbi.nlm.nih.gov/sra)
 
+
 ### Biological Network
 
-The `levi` supports several extensions of biological network files (\*.net, \*.dyn, \*.txt, \*.dat). The user should build the biological network using specific tools such as Cytoscape, RedeR, Medusa, etc. It is recommended to obtain interaction data/biological associations from online repositories:
+The `levi` supports several extensions of biological network files (\*.net, \*.dyn, \*.txt, \*.dat). It is recommended to obtain interaction data/biological associations from online repositories such as the The user should build the biological network using specific tools such as Cytoscape, RedeR, Medusa, etc. It is recommended to obtain interaction data/biological associations from online repositories:
 - [STRING database](https://string-db.org/)
+- [STITCH database](http://stitch.embl.de/)
 - [StarBase](http://starbase.sysu.edu.cn/)
 - [miRBase](http://www.mirbase.org/)
 - [lncRNAdb](http://www.lncrnadb.org/)
 - [HTRIdb](http://www.lbbc.ibb.unesp.br/htri)
+
 
 | Extension | File Type | Link |
 |-----------|-----------|-----|
@@ -73,13 +78,19 @@ The `levi` supports several extensions of biological network files (\*.net, \*.d
 | stg       | STRING / STITCH | [Example coordinates](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/string_network_coordinates.txt) |
 | stg       | STRING / STITCH | [Example interactions](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/string_interactions.tsv)|
 
-## Viewing Modes
 
-`levi` has two viewing modes: **Graphical User Interface (GUI)** and **script**.
+
+## Viewing Modes
 
 ### Graphical User Interface (GUI)
 
-The GUI mode was developed using the Shiny package (Figure 1). This viewing mode can be used in the R environment (`browser=FALSE`) or in the user's default operating system browser (`browser=TRUE`).
+levi is developed with a Graphical User Interface (GUI) leveraging the Shiny package, enabling it to be launched both within the R environment and the user's default web browser. Choosing Shiny for the GUI aims to provide a highly interactive experience, where users can intuitively manipulate data and visual settings. This makes the analysis of gene expression in biological networks accessible even to those who may not be familiar with programming in R, facilitating data exploration and interpretation in a visual manner.
+
+Furthermore, the core analysis of levi is implemented in Rcpp (C++), a strategic decision to take advantage of the efficiency and performance this language offers. This hybrid approach ensures that while the Shiny-based GUI manages user interaction in a fluid and responsive manner, heavy data processing is optimally executed in the backend in Rcpp. This results in a powerful tool that combines ease of use with the capability to perform complex and computationally intensive analyses.
+
+Every element of the GUI, from data loading to selecting parameters for analysis and visualization adjustments, has been meticulously designed to support users in conducting their analyses without needing deep programming knowledge. Simultaneously, the integration of the C++ analysis core through appropriate interfaces with the R environment allows levi to carry out advanced calculations effectively, maintaining the interactivity and accessibility provided by the Shiny interface.
+
+
 
 ```r
 library(levi)
@@ -140,11 +151,10 @@ area in the **landscape**. The user can save the table in a csv file
     the total time required will be longer.
     + **Zoom** - Zoom value for the **landscape**. The variable range is 
     1 to 100. The default value is 50.
+    
+### Script
 
-## Script
-
-The `levi` scripting mode also has the settings for **landscape** building 
-(see example below).
+The script mode offers enhanced flexibility for more detailed settings adjustments and comprehensive automation. This mode is particularly well-suited for advanced users who require precise control over their analysis parameters and workflows. Additionally, it is ideal for processing large datasets in bulk, enabling efficient data handling and analysis customization. This capability makes it an invaluable tool for researchers and data scientists looking to streamline their data analysis pipelines, ensuring both scalability and reproducibility in their work.
 
 ```r
 library(levi)
@@ -172,6 +182,7 @@ twocolors <- levi(networkCoordinatesInput = template_network,
                 setcolor = "pink_green", contourLevi = FALSE)
 
 ```
+
 The script mode allows the user to compare combinations between two 
 experiments in the gene expression levels file. The readExpColumn function 
 can be used to this task to inform the combination separating by dash (-) 
@@ -206,6 +217,7 @@ twocolors <- levi(networkCoordinatesInput = template_network,
 ```
 
 [more examples](https://github.com/jrybarczyk/levi/blob/paper/Case/Case.pdf)
-
+`levi` offers a versatile solution for gene expression and biological network analysis, catering to a wide range of user preferences and technical expertise levels.
 ## Information about downloads of levi on Bioconductor.org
 ![](https://github.com/jrybarczyk/levi/blob/paper/miscellaneous/Rplot.png)
+
