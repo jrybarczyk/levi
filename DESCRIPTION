@@ -16,18 +16,41 @@ Authors@R:
       person(given = "Jose",
                 family = "Rybarczyk Filho",
                 role = c("ctb", "cre", "ths"),
-                email = "jose.luiz@unesp.br")
+                email = "jose.luiz@unesp.br",
+                comment = c(ORCID = "0000-0002-0757-3608"))
 			 )
-Maintainer: Jose Luiz Rybarczyk Filho <jose.luiz@unesp.br>
-Description: The tool integrates data from biological networks with transcriptomes, displaying a heatmap with surface curves to evidence the altered regions.
+Description: levi is an open-source R package designed to enhance the visualization of gene expression data integrated with biological networks. It provides an interactive graphical user interface (GUI) for users to upload and manipulate data, offering intuitive control over visualization settings. Additionally, levi supports script-based usage for advanced users requiring automation and detailed customization. The package displays a heatmap with surface curves, highlighting regions of altered gene expression. It supports multiple file formats for both gene expression data and biological networks, making it a versatile tool for transcriptomic analysis and network biology.
+URL: https://bioconductor.org/packages/levi
+BugReports: https://github.com/jrybarczyk/levi/issues
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 RoxygenNote: 7.0.1
-Suggests: rmarkdown, BiocStyle
-Imports: DT(>= 0.4), RColorBrewer(>= 1.1-2), colorspace(>= 1.3-2), dplyr(>= 0.7.4), ggplot2(>= 2.2.1), httr(>= 1.3.1), igraph(>= 1.2.1), reshape2(>= 1.4.3), shiny(>= 1.0.5), shinydashboard(>= 0.7.0), shinyjs(>= 1.0), xml2(>= 1.2.0), knitr, Rcpp (>= 0.12.18), grid, grDevices, stats, utils, testthat, methods, rmarkdown
+Imports: 
+    DT(>= 0.4), 
+    RColorBrewer(>= 1.1-2), 
+    colorspace(>= 1.3-2), 
+    dplyr(>= 0.7.4), 
+    ggplot2(>= 2.2.1), 
+    httr(>= 1.3.1), 
+    igraph(>= 1.2.1), 
+    reshape2(>= 1.4.3), 
+    shiny(>= 1.0.5), 
+    shinydashboard(>= 0.7.0), 
+    shinyjs(>= 1.0), 
+    xml2(>= 1.2.0),
+    Rcpp (>= 0.12.18),
+    knitr, 
+    rmarkdown,  
+    grid, 
+    grDevices, 
+    stats, 
+    utils, 
+    testthat, 
+    methods,
+    BiocStyle
 LinkingTo: Rcpp
 License: GPL (>= 2)
-biocViews: GeneExpression, Sequencing, Network, Software
+biocViews: GeneExpression, Microarray, Normalization, Sequencing, Network, Software
 VignetteBuilder: knitr
 LazyLoad: yes
 NeedsCompilation: yes
