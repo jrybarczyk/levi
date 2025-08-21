@@ -1,0 +1,4 @@
+# Ignore libs and artfacts
+vignettes/** vignette
+inst/** shiny
+
