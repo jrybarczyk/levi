@@ -1,4 +1,17 @@
-# Ignore libs and artfacts
-vignettes/** vignette
-inst/** shiny
+inst/www/*.html linguist-documentation
+inst/www/*.css linguist-documentation
+inst/www/*.js linguist-documentation
+inst/www/**/*.html linguist-documentation
+inst/www/**/*.css linguist-documentation
+inst/www/**/*.js linguist-documentation
 
+# Arquivos da interface web do Shiny
+inst/www/** linguist-documentation
+
+# Documentação e arquivos de ajuda
+*.html linguist-documentation
+*.css linguist-documentation
+*.js linguist-documentation
+
+# Excluir arquivos de exemplo se necessário
+vignettes/*.html linguist-documentation
