@@ -19,7 +19,7 @@ List matrix_entrada(NumericMatrix coordPiso,
     for(int i=0; i<resolutionValue; i++){
         for(int j=0; j<resolutionValue; j++){
             for(int m=0; m<numberCoord; m++){
-                if ((coord(m,0) < q) & (bandcoord(m,0) == 0)) {
+                if ((coord(m,0) < q) && (bandcoord(m,0) == 0)) {
                     matrixIn(h,0)=coord(m,0);
                     matrixIn(h,1)=coord(m,1);
                     matrixIn(h,2)=SignalOut(m,0);
@@ -28,7 +28,7 @@ List matrix_entrada(NumericMatrix coordPiso,
                     h=h+1;
                     bandcoord(m,0) = 10;
                 } else {
-                    if ((coord(m,0) == q) & (coord(m,1) < p) &
+                    if ((coord(m,0) == q) && (coord(m,1) < p) &
                         (bandcoord(m,0) == 0)) {
                         matrixIn(h,0)=coord(m,0);
                         matrixIn(h,1)=coord(m,1);
