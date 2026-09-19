@@ -1,0 +1,26 @@
+﻿*edges
+A_HUB	A1	i 1	c 1.0	o 0.0
+A_HUB	A2	i 1	c 1.0	o 0.0
+A_HUB	A3	i 1	c 1.0	o 0.0
+A_HUB	A4	i 1	c 1.0	o 0.0
+A_HUB	A5	i 1	c 1.0	o 0.0
+B_HUB	B1	i 1	c 1.0	o 0.0
+B_HUB	B2	i 1	c 1.0	o 0.0
+B_HUB	B3	i 1	c 1.0	o 0.0
+B_HUB	B4	i 1	c 1.0	o 0.0
+B_HUB	B5	i 1	c 1.0	o 0.0
+B_HUB	B6	i 1	c 1.0	o 0.0
+*nodes
+A_HUB	0.25	0.75
+A1	0.10	0.90
+A2	0.40	0.90
+A3	0.10	0.60
+A4	0.40	0.60
+A5	0.25	0.50
+B_HUB	0.75	0.25
+B1	0.60	0.10
+B2	0.90	0.10
+B3	0.60	0.40
+B4	0.90	0.40
+B5	0.75	0.50
+B6	0.75	0.08

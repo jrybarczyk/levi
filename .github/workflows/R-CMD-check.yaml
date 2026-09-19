@@ -1,48 +1,96 @@
+# Builds and checks levi the way the Bioconductor build system does: on the
+# Bioconductor devel Docker image with R CMD check and BiocCheck. A second job
+# runs on macOS and Windows against the current Bioconductor release; it is
+# informative only and does not block the workflow.
 name: R-CMD-check
 
 on:
   push:
-    branches: [main, master]
+    branches: [master, main, devel]
   pull_request:
-    branches: [main, master]
+    branches: [master, main, devel]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+  R_KEEP_PKG_SOURCE: yes
+  _R_CHECK_FORCE_SUGGESTS_: false
+  _R_CHECK_TESTS_NLINES_: 0
 
 jobs:
-  R-CMD-check:
-    runs-on: ${{ matrix.config.os }}
-    strategy:
-      matrix:
-        config:
-          - {os: macos-latest, r: 'release'}
-          - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest, r: 'release'}
-          - {os: ubuntu-latest, r: 'oldrel-1'}
-
-    env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      R_KEEP_PKG_SOURCE: yes
-      _R_CHECK_FORCE_SUGGESTS_: false
-
+  bioc-devel:
+    name: Bioconductor devel (Linux)
+    runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:devel
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Bioconductor and R versions
+        run: |
+          Rscript -e 'cat(R.version.string, "\n"); cat("Bioconductor", as.character(BiocManager::version()), "\n")'
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: bioc-devel-1
+          extra-packages: any::rcmdcheck, any::BiocCheck
+          needs: check
+
+      - name: R CMD build
+        run: R CMD build --keep-empty-dirs --no-resave-data .
+
+      - name: R CMD check
+        run: |
+          tarball=$(ls -1t levi_*.tar.gz | head -n 1)
+          R CMD check --no-manual --timings "$tarball"
+
+      - name: BiocCheck
+        run: |
+          tarball=$(ls -1t levi_*.tar.gz | head -n 1)
+          Rscript -e 'BiocCheck::BiocCheck(commandArgs(TRUE)[1], `quit-with-status` = TRUE, `no-check-bioc-views` = FALSE)' "$tarball"
+
+      - name: Examples slower than 5 s
+        if: always()
+        run: |
+          f=$(ls levi.Rcheck/levi-Ex.timings 2>/dev/null) && awk 'NR > 1 && $4 > 5 {print}' "$f" || true
+
+      - name: Upload check results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-results-bioc-devel
+          path: levi.Rcheck
+
+  bioc-release:
+    name: Bioconductor release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
 
       - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: r-lib/actions/setup-r@v2
         with:
-          r-version: ${{ matrix.config.r }}
+          r-version: release
           use-public-rspm: true
-
-      - name: Install system dependencies (macOS)
-        if: matrix.config.os == 'macos-latest'
-        run: |
-          brew install pkg-config
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: rcmdcheck
+          cache-version: bioc-release-1
+          extra-packages: any::rcmdcheck
           needs: check
 
-      - name: Check package
-        run: |
-          Rscript -e 'rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "warning")'
-        shell: bash
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual", "--ignore-vignettes")'
+          build_args: 'c("--no-build-vignettes")'
+          error-on: '"error"'
+          upload-snapshots: false

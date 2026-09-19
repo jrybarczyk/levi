@@ -1,47 +1,54 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+# Runs the testthat suite under covr on the Bioconductor devel image and
+# uploads the report to Codecov. Without a CODECOV_TOKEN secret the upload
+# is skipped and the coverage summary is only printed in the log.
+name: test-coverage
+
 on:
   push:
-    branches: [main, master]
+    branches: [master, main, devel]
   pull_request:
-    branches: [main, master]
-
-name: test-coverage
+    branches: [master, main, devel]
+  workflow_dispatch:
 
 jobs:
   test-coverage:
     runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:devel
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
     steps:
       - uses: actions/checkout@v4
 
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr
+          cache-version: bioc-devel-1
+          extra-packages: any::covr, any::xml2
           needs: coverage
 
       - name: Test coverage
         run: |
-          token <- Sys.getenv("CODECOV_TOKEN", "")
-          covr::codecov(
+          cov <- covr::package_coverage(
             quiet = FALSE,
             clean = FALSE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package"),
-            token = if (token != "") token
+            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
           )
+          print(cov)
+          covr::to_cobertura(cov, filename = "cobertura.xml")
         shell: Rscript {0}
+
+      - name: Upload to Codecov
+        if: env.CODECOV_TOKEN != ''
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./cobertura.xml
+          slug: jrybarczyk/levi
+          fail_ci_if_error: false
 
       - name: Show testthat output
         if: always()
         run: |
-          ## --------------------------------------------------------------------
           find '${{ runner.temp }}/package' -name 'testthat.Rout*' -exec cat '{}' \; || true
         shell: bash
 
@@ -51,9 +58,3 @@ jobs:
         with:
           name: coverage-test-failures
           path: ${{ runner.temp }}/package
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.0.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: jrybarczyk/levi

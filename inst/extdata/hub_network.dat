@@ -1,0 +1,19 @@
+*edges
+HUB	N1	i 1	c 1.0	o 0.0
+HUB	N2	i 1	c 1.0	o 0.0
+HUB	N3	i 1	c 1.0	o 0.0
+HUB	N4	i 1	c 1.0	o 0.0
+HUB	N5	i 1	c 1.0	o 0.0
+HUB	N6	i 1	c 1.0	o 0.0
+HUB	N7	i 1	c 1.0	o 0.0
+HUB	N8	i 1	c 1.0	o 0.0
+*nodes
+HUB	0.50	0.50
+N1	0.50	0.70
+N2	0.70	0.50
+N3	0.50	0.30
+N4	0.30	0.50
+N5	0.85	0.85
+N6	0.85	0.15
+N7	0.15	0.85
+N8	0.15	0.15

@@ -1,0 +1,58 @@
+# Pushing a tag such as v2.0.0 builds the source tarball, checks it on the
+# Bioconductor devel image and publishes a GitHub Release whose notes are the
+# matching section of NEWS.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:devel
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      _R_CHECK_FORCE_SUGGESTS_: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: bioc-devel-1
+          needs: check
+
+      - name: Build and check the tarball
+        run: |
+          R CMD build --keep-empty-dirs --no-resave-data .
+          tarball=$(ls -1t levi_*.tar.gz | head -n 1)
+          R CMD check --no-manual --no-build-vignettes --ignore-vignettes "$tarball"
+          echo "TARBALL=$tarball" >> "$GITHUB_ENV"
+
+      - name: Release notes from NEWS
+        run: |
+          version=$(sed -n 's/^Version: *//p' DESCRIPTION)
+          awk -v v="$version" '
+            $0 ~ "^Changes in version " v "$" {on = 1; next}
+            on && /^Changes in version / {exit}
+            on {print}
+          ' NEWS > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "No NEWS section found for version $version" > release_notes.md
+          fi
+          {
+            echo "Source package: \`$TARBALL\` (DESCRIPTION version $version)."
+            echo
+            echo '```'
+            cat release_notes.md
+            echo '```'
+          } > release_body.md
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: levi ${{ github.ref_name }}
+          body_path: release_body.md
+          files: ${{ env.TARBALL }}

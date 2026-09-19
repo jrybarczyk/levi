@@ -1,0 +1,17 @@
+"test","network","module_size","effect","replicates","power"
+"sample-label replicate","medusa",8,0.5,100,0.08
+"graph TFCE","medusa",8,0.5,100,0.13
+"sample-label replicate","medusa",8,1,100,0.17
+"graph TFCE","medusa",8,1,100,0.26
+"sample-label replicate","medusa",8,1.5,100,0.47
+"graph TFCE","medusa",8,1.5,100,0.78
+"sample-label replicate","medusa",8,2,100,0.81
+"graph TFCE","medusa",8,2,100,0.97
+"sample-label replicate","ba300",8,0.5,100,0.01
+"graph TFCE","ba300",8,0.5,100,0.03
+"sample-label replicate","ba300",8,1,100,0.03
+"graph TFCE","ba300",8,1,100,0.25
+"sample-label replicate","ba300",8,1.5,100,0.03
+"graph TFCE","ba300",8,1.5,100,0.61
+"sample-label replicate","ba300",8,2,100,0.03
+"graph TFCE","ba300",8,2,100,0.89

@@ -1,0 +1,971 @@
+---
+title: "levi: A Complete User Guide"
+author:
+  - name: José Rafael Pilan
+    affiliation: São Paulo State University (UNESP)
+    email: rafael.pilan@unesp.br
+  - name: José Luiz Rybarczyk Filho
+    affiliation: São Paulo State University (UNESP)
+date: "`r Sys.Date()`"
+bibliography: bibliography.bib
+link-citations: true
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+vignette: >
+  %\VignetteIndexEntry{levi: A Complete User Guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    collapse  = TRUE,
+    comment   = "#>",
+    fig.align = "center",
+    fig.width = 6,
+    fig.height = 5,
+    message   = FALSE,
+    warning   = FALSE
+)
+library(levi)
+```
+
+# Introduction
+
+**levi** (*Landscape Expression Visualization Interface*) integrates gene
+expression data with biological network topology to produce a continuous
+**landscape** — a 2-D heatmap that reveals which regions of a network are
+collectively over- or under-expressed.
+
+The core idea is that genes positioned close to each other in the network
+influence each other's landscape score through normalised Gaussian
+convolution implemented in C++. A gene expressed in isolation contributes
+mainly to its own score; a gene that sits in a highly expressed neighbourhood
+contributes to the weighted average over that region.
+
+Key features in this release:
+
+| Feature | Function |
+|:---|:---|
+| Landscape computation | `levi()` |
+| Interactive GUI | `LEVIui()` |
+| Comparison builder | `readExpColumn()` |
+| DESeq2 / edgeR / limma / Seurat adapters | `leviFromDESeq2()` etc. |
+| SummarizedExperiment adapter | `leviFromSE()` |
+| STRING network retrieval | `leviFromSTRING()` |
+| Side-by-side comparison | `leviGrid()` |
+| Landscape subtraction | `leviDiff()` |
+| GO / KEGG enrichment | `leviEnrich()` |
+
+---
+
+# Installation
+
+```{r install, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("levi")
+
+# Optional — needed for specific features
+BiocManager::install(c(
+    "DESeq2", "edgeR", "limma",           # DE adapters
+    "SummarizedExperiment",               # leviFromSE
+    "STRINGdb",                           # leviFromSTRING
+    "clusterProfiler", "org.Hs.eg.db",   # leviEnrich
+    "airway"                              # example dataset
+))
+install.packages(c("Seurat", "ggrepel", "patchwork", "plotly"))
+```
+
+---
+
+# Core concepts
+
+## The landscape score
+
+Each node (gene) in the network receives a **landscape score** in \[0, 1\]:
+
+- **1.0** — high transformed signal in the local neighbourhood
+- **0.5** — neutral input for two-column ratio and logFC; in zscore, the
+  mean logFC of measured support points
+- **0.0** — low transformed signal in the local neighbourhood
+
+A single ratio column measures abundance/(abundance + 1), without a control.
+
+The score is computed in three steps:
+
+1. **Signal transformation** (`signal_mode`) — converts raw expression values
+   to a signal in \[0, 1\].
+2. **Gaussian convolution** (C++) — node and edge-midpoint signals are
+   projected onto a regular grid and smoothed as normalised weighted averages.
+3. **Occupancy masking** — cells outside the network silhouette become `NA`.
+   Grid width is `as.integer((resolutionValueInput / 100) * 210 + 30)` after
+   clipping the input to 1–100.
+
+## The `readExpColumn()` helper
+
+`readExpColumn("Test-Control")` tells `levi()` which columns of the expression
+file represent the test and control conditions. Multiple comparisons produce
+one landscape per comparison (batch mode):
+
+```{r readexp_demo}
+# Single comparison
+readExpColumn("TumorCurrentSmoker-NormalNeverSmoker")
+
+# Two comparisons — levi() will return a list of two results
+readExpColumn(
+    "TumorCurrentSmoker-NormalNeverSmoker",
+    "TumorFormerSmoker-NormalFormerSmoker"
+)
+```
+
+---
+
+# Signal transformation modes
+
+`signal_mode` determines how raw expression values are converted to scores.
+Choose based on the scale of your data:
+
+| `signal_mode` | Formula | Score 0.5 = | Best for |
+|:---:|:---|:---|:---|
+| `"ratio"` (default) | Test / (Test + Control) | Test ≈ Control | Counts, TPM, FPKM, linear LFQ |
+| `"logfc"` | 1 / (1 + e^{−k · logFC}) | logFC = 0 | RMA, VST/rlog, log2-proteomics, scRNA-seq avg\_log2FC |
+| `"zscore"` | pnorm(z) | Mean logFC of support points | Relative position within a comparison |
+
+`logfc_k` controls sigmoid steepness (default 1). Use **k = 0.5** for
+scRNA-seq (large FC values ±5) and **k = 2** for microarray (tight FC ±1).
+
+```{r signal_mode_demo, fig.height=4, fig.width=10}
+logfc_net  <- file.path(system.file(package="levi"), "extdata",
+                         "logfc_network.dat")
+logfc_expr <- file.path(system.file(package="levi"), "extdata",
+                         "logfc_expression.dat")
+
+base_call <- list(networkCoordinatesInput = logfc_net,
+                  expressionInput         = logfc_expr,
+                  fileTypeInput           = "dat",
+                  geneSymbolInput         = "ID",
+                  readExpColumn           = readExpColumn("Test-Control"),
+                  contrastValueInput      = 50,
+                  resolutionValueInput    = 20,
+                  zoomValueInput          = 50,
+                  smoothValueInput        = 5)
+
+res_ratio  <- do.call(levi, c(base_call, list(signal_mode = "ratio")))
+res_logfc  <- do.call(levi, c(base_call, list(signal_mode = "logfc")))
+res_zscore <- do.call(levi, c(base_call, list(signal_mode = "zscore")))
+
+cat(sprintf(
+    "Score range  ratio: %.3f  |  logfc: %.3f  |  zscore: %.3f\n",
+    diff(range(res_ratio$scores$LandscapeScore)),
+    diff(range(res_logfc$scores$LandscapeScore)),
+    diff(range(res_zscore$scores$LandscapeScore))
+))
+```
+
+---
+
+# Toy datasets
+
+Seven toy datasets ship with **levi** in `inst/extdata/`. Each tests a
+specific aspect of the package with known expected outcomes.
+
+## Hub topology
+
+A 9-node star network where the central hub and close spokes are
+over-expressed and the outer corners are under-expressed.
+
+```{r hub}
+hub_net  <- file.path(system.file(package="levi"), "extdata",
+                       "hub_network.dat")
+hub_expr <- file.path(system.file(package="levi"), "extdata",
+                       "hub_expression.dat")
+
+res_hub <- levi(
+    networkCoordinatesInput = hub_net,
+    expressionInput         = hub_expr,
+    fileTypeInput           = "dat",
+    geneSymbolInput         = "ID",
+    readExpColumn           = readExpColumn("Test-Control"),
+    contrastValueInput      = 50,
+    resolutionValueInput    = 20,
+    zoomValueInput          = 50,
+    smoothValueInput        = 5,
+    contourLevi             = TRUE
+)
+```
+
+```{r hub_scores}
+res_hub$scores[, c("Gene", "LandscapeScore", "Rank")]
+```
+
+## Gradient topology
+
+A 6-node linear chain with a monotone expression gradient. Verifies that
+landscape scores preserve strict rank order.
+
+```{r gradient}
+grad_net  <- file.path(system.file(package="levi"), "extdata",
+                        "gradient_network.dat")
+grad_expr <- file.path(system.file(package="levi"), "extdata",
+                        "gradient_expression.dat")
+
+res_grad <- levi(
+    networkCoordinatesInput = grad_net,
+    expressionInput         = grad_expr,
+    fileTypeInput           = "dat",
+    geneSymbolInput         = "ID",
+    readExpColumn           = readExpColumn("Test-Control"),
+    contrastValueInput      = 50,
+    resolutionValueInput    = 20,
+    zoomValueInput          = 50,
+    smoothValueInput        = 5
+)
+
+scores_ord <- res_grad$scores[order(res_grad$scores$Rank),
+                               c("Gene", "LandscapeScore")]
+scores_ord
+```
+
+## Bimodal topology — simultaneous peak and valley
+
+Two disconnected star clusters: cluster A (over-expressed) and cluster B
+(under-expressed). Demonstrates bilateral permutation test contours and
+`leviDiff`.
+
+```{r bimodal}
+bim_net  <- file.path(system.file(package="levi"), "extdata",
+                       "bimodal_network.dat")
+bim_expr <- file.path(system.file(package="levi"), "extdata",
+                       "bimodal_expression.dat")
+
+res_bim <- levi(
+    networkCoordinatesInput = bim_net,
+    expressionInput         = bim_expr,
+    fileTypeInput           = "dat",
+    geneSymbolInput         = "ID",
+    readExpColumn           = readExpColumn("Test-Control"),
+    contrastValueInput      = 50,
+    resolutionValueInput    = 20,
+    zoomValueInput          = 50,
+    smoothValueInput        = 5,
+    contourLevi             = TRUE
+)
+```
+
+```{r bimodal_check}
+cat("A_HUB score:", round(res_bim$scores$LandscapeScore[
+    res_bim$scores$Gene == "A_HUB"], 3), "\n")
+cat("B_HUB score:", round(res_bim$scores$LandscapeScore[
+    res_bim$scores$Gene == "B_HUB"], 3), "\n")
+```
+
+## Flat expression — null control
+
+A 3×3 grid where all genes have identical expression (Test = Control = 100).
+Validates absence of false-positive peaks.
+
+```{r flat}
+flat_net  <- file.path(system.file(package="levi"), "extdata",
+                        "flat_network.dat")
+flat_expr <- file.path(system.file(package="levi"), "extdata",
+                        "flat_expression.dat")
+
+res_flat <- levi(
+    networkCoordinatesInput = flat_net,
+    expressionInput         = flat_expr,
+    fileTypeInput           = "dat",
+    geneSymbolInput         = "ID",
+    readExpColumn           = readExpColumn("Test-Control"),
+    contrastValueInput      = 50,
+    resolutionValueInput    = 20,
+    zoomValueInput          = 50,
+    smoothValueInput        = 5
+)
+cat(sprintf("Score SD = %.4f  (expected < 0.15)\n",
+            sd(res_flat$scores$LandscapeScore)))
+```
+
+## Sparse expression — missing gene handling
+
+A 15-node network where only 5 genes have measured expression. Missing genes
+receive a mode-appropriate neutral value.
+
+```{r sparse}
+sparse_net  <- file.path(system.file(package="levi"), "extdata",
+                          "sparse_network.dat")
+sparse_expr <- file.path(system.file(package="levi"), "extdata",
+                          "sparse_expression.dat")
+
+res_sparse <- levi(
+    networkCoordinatesInput = sparse_net,
+    expressionInput         = sparse_expr,
+    fileTypeInput           = "dat",
+    geneSymbolInput         = "ID",
+    readExpColumn           = readExpColumn("Test-Control"),
+    contrastValueInput      = 50,
+    resolutionValueInput    = 20,
+    zoomValueInput          = 50,
+    smoothValueInput        = 5
+)
+cat("Nodes in scores table:", nrow(res_sparse$scores),
+    "(expected 15)\n")
+```
+
+---
+
+# Node scores and peak detection
+
+Every `levi()` call returns an invisible list with three analytical objects:
+
+```{r result_structure}
+# res_hub was computed above; the same six fields come back from every call.
+names(res_hub)
+
+str(res_hub$scores)          # Gene, X, Y, LandscapeScore, Rank
+str(res_hub$peaks)           # Type (peak/valley), NearestGene, ..., Score
+str(res_hub$landscape)       # the plotted surface: Var1, Var2, z
+res_hub$pvalues              # NULL here, because n_perm = 0
+class(res_hub$plot)          # the ggplot object
+```
+
+```{r scores_demo}
+# Top 5 genes by landscape score
+head(res_hub$scores[, c("Gene", "LandscapeScore", "Rank")], 5)
+
+# Detected peaks and valleys
+if (!is.null(res_bim$peaks) && nrow(res_bim$peaks) > 0)
+    res_bim$peaks[, c("Type", "NearestGene", "Score")]
+```
+
+---
+
+# Permutation significance test
+
+Set `n_perm > 0` to build a null distribution by randomly shuffling expression
+pairs across measured network nodes, with edge signals recalculated each time.
+The network and layout stay fixed. By default (`inference_unit = "region"`)
+regions are redetected in every permutation and each observed region gets a
+p-value against the maximum regional mass under the null; significant regions
+are outlined in white. The legacy `inference_unit = "cell"` instead draws
+contours from BY-adjusted p-values over both tails of occupied cells: dashed
+(higher score) and dotted (lower score).
+
+```{r perm}
+set.seed(42)
+res_perm <- levi(
+    networkCoordinatesInput = grad_net,
+    expressionInput         = grad_expr,
+    fileTypeInput           = "dat",
+    geneSymbolInput         = "ID",
+    readExpColumn           = readExpColumn("Test-Control"),
+    contrastValueInput      = 50,
+    resolutionValueInput    = 20,
+    zoomValueInput          = 50,
+    smoothValueInput        = 5,
+    contourLevi             = TRUE,
+    n_perm                  = 50,
+    perm_side               = "both",
+    sig_level               = 0.05
+)
+```
+
+```{r perm-regions}
+res_perm$regions$summary[, c("Region", "Direction", "Cells", "Mass",
+                             "PSpatial", "Significant")]
+```
+
+| `perm_side` | Regions outlined (region mode) | Contour(s) drawn (cell mode) |
+|:---:|:---|:---|
+| `"both"` (default) | Over and under | Dashed (over) + dotted (under) |
+| `"over"` | Over only | Dashed only |
+| `"under"` | Under only | Dotted only |
+
+In cell mode the adjusted p-value matrices are available in
+`result$pvalues$over` and `result$pvalues$under` (dimensions:
+`resolutionValue × resolutionValue`). The vignette `levi_inference` compares
+the two modes and the sample-label and graph-based tests.
+
+---
+
+# Batch mode and multi-comparison
+
+Provide multiple comparison strings to `readExpColumn()` and `levi()` returns
+a list — one result per comparison.
+
+```{r batch, fig.show="hold", out.width="50%"}
+hub_net <- file.path(system.file(package="levi"), "extdata",
+                      "hub_network.dat")
+mc_expr <- file.path(system.file(package="levi"), "extdata",
+                      "hub_multicomp_expression.dat")
+
+res_list <- levi(
+    networkCoordinatesInput = hub_net,
+    expressionInput         = mc_expr,
+    fileTypeInput           = "dat",
+    geneSymbolInput         = "ID",
+    readExpColumn           = readExpColumn("Cond_A-Cond_B",
+                                            "Cond_A-Cond_C"),
+    contrastValueInput      = 50,
+    resolutionValueInput    = 20,
+    zoomValueInput          = 50,
+    smoothValueInput        = 5
+)
+
+cat("Number of comparisons:", length(res_list), "\n")
+cat("Cond_A-Cond_B score range:",
+    round(diff(range(res_list[[1]]$scores$LandscapeScore)), 3), "\n")
+cat("Cond_A-Cond_C score range:",
+    round(diff(range(res_list[[2]]$scores$LandscapeScore)), 3), "\n")
+```
+
+## leviGrid — side-by-side comparison
+
+```{r levigrid, fig.show="hold", out.width="50%"}
+leviGrid(res_list, titles = c("Cond A vs B", "Cond A vs C"), ncol = 2)
+```
+
+## leviDiff — landscape subtraction
+
+`leviDiff()` subtracts two landscapes cell-by-cell and generates a diverging
+blue-to-red map of regional change. Blue = region decreased; red = increased.
+
+```{r levidiff}
+leviDiff(
+    res_list[[1]], res_list[[2]],
+    label_a = "Cond_A vs Cond_B",
+    label_b = "Cond_A vs Cond_C"
+)
+```
+
+---
+
+# Differential expression adapters
+
+**levi** provides four adapter functions that convert the outputs of DESeq2
+[@Love2014], edgeR [@Robinson2010], limma [@Ritchie2015] and Seurat
+[@Hao2021] directly into the data.frame format expected by `expressionInput`.
+
+## leviFromDESeq2
+
+```{r deseq2_adapter, eval=FALSE}
+library(DESeq2)
+
+dds    <- DESeqDataSetFromMatrix(counts, colData, design = ~condition)
+dds    <- DESeq(dds)
+res_de <- results(dds, contrast = c("condition", "treated", "untreated"))
+
+expr_df <- leviFromDESeq2(res_de, gene_col = "GeneID")
+# Columns: GeneID, baseMean (abundance annotation), log2FoldChange (logFC signal)
+
+levi(
+    expressionInput = expr_df,
+    # ...
+    readExpColumn   = readExpColumn("log2FoldChange-log2FoldChange"),
+    signal_mode     = "logfc"
+)
+```
+
+## leviFromEdgeR
+
+```{r edger_adapter, eval=FALSE}
+library(edgeR)
+
+dge  <- DGEList(counts = counts, group = group)
+dge  <- calcNormFactors(dge)
+fit  <- glmQLFit(dge, design)
+res  <- glmQLFTest(fit, coef = 2)
+
+expr_df <- leviFromEdgeR(res, gene_col = "GeneID")
+# Columns: GeneID, logCPM (abundance annotation), logFC (logFC signal)
+```
+
+## leviFromLimma
+
+```{r limma_adapter, eval=FALSE}
+library(limma)
+
+fit  <- lmFit(eset, design)
+fit2 <- contrasts.fit(fit, makeContrasts(TvsC = Tumor - Control,
+                                          levels = design))
+fit2 <- eBayes(fit2)
+
+expr_df <- leviFromLimma(fit2, coef = "TvsC", gene_col = "GeneID")
+# Columns: GeneID, AveExpr (abundance annotation), logFC (logFC signal)
+```
+
+## leviFromSeurat
+
+```{r seurat_adapter, eval=FALSE}
+library(Seurat)
+
+markers <- FindMarkers(seurat_obj,
+                        ident.1 = "CD4_T",
+                        ident.2 = "B_cell",
+                        min.pct = 0.25)
+
+expr_df <- leviFromSeurat(markers, gene_col = "GeneID")
+# Columns: GeneID, Control (pct.2 annotation), Test (avg_log2FC signal)
+```
+
+## leviFromSE — SummarizedExperiment
+
+```{r se_adapter, eval=FALSE}
+library(SummarizedExperiment)
+
+# Option A: condition labels from colData
+expr_df <- leviFromSE(
+    se            = my_se,
+    assay_name    = "counts",
+    condition_col = "treatment",
+    test_level    = "treated",
+    ctrl_level    = "control",
+    gene_col      = "GeneID"
+)
+
+# Option B: explicit sample names
+expr_df <- leviFromSE(
+    se       = my_se,
+    test_col = c("Sample1", "Sample3"),
+    ctrl_col = c("Sample2", "Sample4")
+)
+```
+
+---
+
+## Running the adapters here
+
+The four differential-expression adapters accept a `data.frame` with the
+columns their tool produces, and `leviFromSE()` needs only
+**SummarizedExperiment**, which levi already depends on. So the whole
+conversion layer can be exercised without installing DESeq2, edgeR, limma or
+Seurat:
+
+```{r adapters_live}
+genes <- c("HUB", paste0("N", 1:8))
+
+# DESeq2-shaped results table
+res_de <- data.frame(
+    baseMean       = rep(1000, 9),
+    log2FoldChange = c(4.3, 4.1, 4.4, 4.2, 4.3, -5.3, -5.1, -5.4, -5.2),
+    row.names      = genes)
+expr_de <- leviFromDESeq2(res_de, gene_col = "GeneID")
+head(expr_de, 3)
+
+# edgeR-shaped and limma-shaped tables
+leviFromEdgeR(data.frame(logFC = 4.3, logCPM = 10.2, row.names = "HUB"),
+              gene_col = "GeneID")
+leviFromLimma(data.frame(logFC = 4.3, AveExpr = 8.1, row.names = "HUB"),
+              gene_col = "GeneID")
+
+# Seurat-shaped markers: pct.2 becomes Control, avg_log2FC becomes Test
+leviFromSeurat(data.frame(avg_log2FC = 2.5, pct.2 = 0.3, row.names = "HUB"),
+               gene_col = "GeneID")
+
+# A SummarizedExperiment, aggregated by condition label
+counts <- matrix(c(200, 200, 200, 200, 200, 5, 5, 5, 5,
+                   190, 210, 195, 205, 200, 6, 4, 5, 5,
+                    10,  10,  10,  10,  10, 200, 200, 200, 200),
+                 nrow = 9,
+                 dimnames = list(genes, c("t1", "t2", "n1")))
+se <- SummarizedExperiment::SummarizedExperiment(
+    assays  = list(counts = counts),
+    colData = data.frame(condition = c("Tumor", "Tumor", "Normal"),
+                         row.names = colnames(counts)))
+
+expr_se <- leviFromSE(se, assay_name = "counts", condition_col = "condition",
+                      test_level = "Tumor", ctrl_level = "Normal",
+                      gene_col = "GeneID")
+head(expr_se, 3)
+```
+
+The output of any adapter goes straight into `expressionInput`. Remember that
+a table carrying a ready-made logFC must be used in single-column mode:
+
+```{r adapters_to_levi, fig.height=5, fig.width=5}
+hub_net <- system.file("extdata", "hub_network.dat", package = "levi")
+
+res_from_de <- levi(
+    expressionInput         = expr_de,
+    networkCoordinatesInput = hub_net,
+    fileTypeInput           = "dat",
+    geneSymbolInput         = "GeneID",
+    readExpColumn           = readExpColumn("log2FoldChange-log2FoldChange"),
+    resolutionValueInput    = 40,
+    signal_mode             = "logfc")
+
+head(res_from_de$scores[, c("Gene", "LandscapeScore", "Rank")], 4)
+```
+
+# Building networks from STRING
+
+`leviFromSTRING()` retrieves a protein interaction network from the
+[STRING database](https://string-db.org) [@Szklarczyk2021] and computes a 2-D
+layout with igraph [@Csardi2006] automatically. No manual file download is required.
+
+```{r string_basic, eval=FALSE}
+library(levi)
+# BiocManager::install("STRINGdb")
+
+# MAPK pathway genes (human)
+mapk_genes <- c("EGFR", "KRAS", "BRAF", "MAP2K1", "MAPK1",
+                 "MAPK3", "RPS6KA1", "MYC", "JUN", "FOS")
+
+set.seed(42)   # layout is stochastic; fix seed for reproducibility
+net <- leviFromSTRING(
+    genes           = mapk_genes,
+    species         = 9606,          # human
+    score_threshold = 400,           # medium confidence
+    layout          = "fr"           # Fruchterman-Reingold
+)
+
+# net$nodes : data.frame — name, x, y
+# net$edges : data.frame — V1, V2
+# net$graph : igraph object
+
+levi(
+    expressionInput          = my_de_results,
+    networkCoordinatesInput  = net$nodes,
+    networkInteractionsInput = net$edges,
+    fileTypeInput            = "stg",
+    geneSymbolInput          = "GeneID",
+    readExpColumn            = readExpColumn("log2FoldChange-log2FoldChange"),
+    signal_mode              = "logfc"
+)
+```
+
+## Layout algorithms
+
+| `layout` | Algorithm | Best for |
+|:---:|:---|:---|
+| `"fr"` | Fruchterman-Reingold [@Fruchterman1991] | General use, 50–500 nodes |
+| `"kk"` | Kamada-Kawai [@Kamada1989] | Small networks (≤ 100 nodes) |
+| `"lgl"` | Large Graph Layout | Large networks (> 500 nodes) |
+| `"dh"` | Davidson-Harel | Highest quality, slower |
+| `"circle"` | Ring | Pathway-like chains |
+
+## Species codes
+
+| Organism | `species` |
+|:---|:---:|
+| *H. sapiens* | `9606` |
+| *M. musculus* | `10090` |
+| *R. norvegicus* | `10116` |
+| *D. rerio* | `7955` |
+| *D. melanogaster* | `7227` |
+| *C. elegans* | `6239` |
+| *S. cerevisiae* | `4932` |
+
+## Saving and reusing networks
+
+```{r string_save, eval=FALSE}
+# Save to TSV — readable directly by levi() as file paths
+write.table(net$nodes, "string_nodes.tsv",
+            sep = "\t", row.names = FALSE, quote = FALSE)
+write.table(net$edges, "string_edges.tsv",
+            sep = "\t", row.names = FALSE, quote = FALSE)
+
+# Save full R object (preserves igraph + layout)
+saveRDS(net, "string_network.rds")
+
+# Reload in future sessions
+net2 <- readRDS("string_network.rds")
+levi(networkCoordinatesInput  = net2$nodes,
+     networkInteractionsInput = net2$edges,
+     fileTypeInput = "stg", ...)
+
+# Or use STRINGdb local cache to avoid re-downloading raw files
+net3 <- leviFromSTRING(genes, input_directory = "~/.stringdb_cache")
+```
+
+---
+
+# Real-data examples
+
+## RNA-seq: airway (DESeq2 + STRING)
+
+The `airway` dataset [@Himes2014] contains RNA-seq counts from airway smooth
+muscle cells treated with dexamethasone (DEX) vs untreated controls (4 cell
+lines, ~64k genes). We use DESeq2 to identify DE genes and `leviFromSTRING()` to build
+the interaction network.
+
+```{r airway, eval=FALSE}
+BiocManager::install(c("airway", "DESeq2", "STRINGdb"))
+library(airway); library(DESeq2); library(levi)
+
+data(airway)
+dds <- DESeqDataSet(airway, design = ~cell + dex)
+dds <- DESeq(dds)
+res <- results(dds, contrast = c("dex", "trt", "untrt"))
+
+expr_df <- leviFromDESeq2(res)
+
+# Top 80 DE genes — build STRING network
+top80 <- head(expr_df$GeneID[order(abs(expr_df$log2FoldChange),
+                                    decreasing = TRUE)], 80)
+set.seed(42)
+net <- leviFromSTRING(top80, species = 9606, score_threshold = 400)
+
+levi(
+    expressionInput          = expr_df,
+    networkCoordinatesInput  = net$nodes,
+    networkInteractionsInput = net$edges,
+    fileTypeInput            = "stg",
+    geneSymbolInput          = "GeneID",
+    readExpColumn            = readExpColumn("log2FoldChange-log2FoldChange"),
+    signal_mode              = "logfc",
+    n_perm                   = 500,
+    perm_side                = "both"
+)
+```
+
+**Biological interpretation:** Nodes inside the dashed contour are network
+hubs whose entire neighbourhood is up-regulated by DEX treatment — strong
+candidates for pathway-level drug targets or effectors.
+
+## Microarray: ALL leukemia (limma + STRING)
+
+The `ALL` dataset [@Chiaretti2004] (Affymetrix HG-U95Av2, 128 patients)
+compares B-cell and
+T-cell subtypes of Acute Lymphoblastic Leukemia. Data are RMA-normalized
+(log2 scale), so `signal_mode = "logfc"` with `logfc_k = 2` (tight microarray
+fold-changes) is appropriate.
+
+```{r all_leukemia, eval=FALSE}
+BiocManager::install(c("ALL", "limma", "STRINGdb"))
+library(ALL); library(limma); library(levi)
+
+data(ALL)
+design   <- model.matrix(~0 + ALL$BT)
+colnames(design) <- c("B", "T")
+contrast <- makeContrasts(B - T, levels = design)
+
+fit  <- lmFit(ALL, design)
+fit2 <- contrasts.fit(fit, contrast)
+fit2 <- eBayes(fit2)
+
+expr_df <- leviFromLimma(fit2, coef = 1)
+
+set.seed(7)
+net <- leviFromSTRING(expr_df$GeneID, species = 9606,
+                       score_threshold = 700,   # high confidence
+                       layout = "kk")
+
+levi(
+    expressionInput          = expr_df,
+    networkCoordinatesInput  = net$nodes,
+    networkInteractionsInput = net$edges,
+    fileTypeInput            = "stg",
+    geneSymbolInput          = "GeneID",
+    readExpColumn            = readExpColumn("logFC-logFC"),
+    signal_mode              = "logfc",
+    logfc_k                  = 2
+)
+```
+
+## scRNA-seq: PBMC (Seurat + STRING)
+
+The 3k PBMC dataset from 10x Genomics [@TenX2016] is analysed with Seurat.
+FindMarkers identifies genes with `avg_log2FC` values per cluster. Since
+scRNA-seq fold-changes can reach ±5, use `logfc_k = 0.5` for a softer sigmoid.
+
+```{r pbmc, eval=FALSE}
+BiocManager::install("TENxPBMCData")
+install.packages("Seurat")
+library(TENxPBMCData); library(Seurat); library(levi)
+
+pbmc_sce <- TENxPBMCData("pbmc3k")
+pbmc     <- as.Seurat(pbmc_sce)
+pbmc     <- NormalizeData(pbmc)
+pbmc     <- FindVariableFeatures(pbmc)
+pbmc     <- ScaleData(pbmc)
+pbmc     <- RunPCA(pbmc)
+pbmc     <- FindNeighbors(pbmc)
+pbmc     <- FindClusters(pbmc, resolution = 0.5)
+
+markers <- FindMarkers(pbmc,
+                        ident.1 = "CD4 T cells",
+                        ident.2 = "B cells",
+                        min.pct = 0.25)
+expr_df <- leviFromSeurat(markers, gene_col = "GeneID")
+
+set.seed(21)
+net <- leviFromSTRING(rownames(markers), species = 9606,
+                       score_threshold = 400, layout = "fr")
+
+levi(
+    expressionInput          = expr_df,
+    networkCoordinatesInput  = net$nodes,
+    networkInteractionsInput = net$edges,
+    fileTypeInput            = "stg",
+    geneSymbolInput          = "GeneID",
+    readExpColumn            = readExpColumn("avg_log2FC-avg_log2FC"),
+    signal_mode              = "logfc",
+    logfc_k                  = 0.5
+)
+```
+
+---
+
+# Enrichment analysis — leviEnrich
+
+After computing the landscape, `leviEnrich()` tests the top-scoring genes
+(peaks) and bottom-scoring genes (valleys) for GO and KEGG enrichment using
+[clusterProfiler](https://bioconductor.org/packages/clusterProfiler).
+
+```{r enrich, eval=FALSE}
+BiocManager::install(c("clusterProfiler", "org.Hs.eg.db"))
+
+enrich_res <- leviEnrich(
+    result     = res_hub,
+    top_n      = 20,          # top-scoring genes (peaks)
+    bottom_n   = 20,          # bottom-scoring genes (valleys)
+    organism   = "hsa",       # KEGG organism code
+    orgdb      = "org.Hs.eg.db",
+    keytype    = "SYMBOL",
+    pval_cutoff = 0.05,
+    types      = c("GO_BP", "KEGG")
+)
+
+# enrich_res$over  — enrichment on peak genes
+# enrich_res$under — enrichment on valley genes
+
+# Dotplots are printed automatically
+# Access results programmatically:
+head(as.data.frame(enrich_res$over$GO_BP))
+```
+
+---
+
+# 3-D interactive visualization
+
+When `plotly` is installed, `plot3d = TRUE` generates an interactive 3-D
+surface alongside the standard 2-D heatmap. Users can rotate, zoom, and
+inspect individual scores.
+
+```{r plot3d, eval=FALSE}
+install.packages("plotly")
+
+levi(
+    networkCoordinatesInput = hub_net,
+    expressionInput         = hub_expr,
+    fileTypeInput           = "dat",
+    geneSymbolInput         = "ID",
+    readExpColumn           = readExpColumn("Test-Control"),
+    contrastValueInput      = 50,
+    resolutionValueInput    = 20,
+    zoomValueInput          = 50,
+    smoothValueInput        = 5,
+    plot3d                  = TRUE
+)
+```
+
+---
+
+# Interactive GUI — LEVIui
+
+The Shiny-based GUI provides interactive access to all **levi** features:
+
+```{r gui, eval=FALSE}
+LEVIui(browser = FALSE)  # open in RStudio Viewer
+LEVIui(browser = TRUE)   # open in system browser
+```
+
+The side panel has a *File* tab (network and expression inputs, colour
+scale, contour, 3D surface, gene highlight, *Run*) and a *Settings* tab
+(contrast, resolution, smoothing, zoom, signal mode and the permutation
+test). The main panel shows the *2D landscape* and the *3D surface* in two
+tabs, and the tables *Genes*, *Node scores*, *Peaks and valleys* and
+*Regions* in four more. The interface calls `levi()` with the chosen
+parameters, so it agrees with script mode.
+
+GUI-only features:
+- **Brush selection** — click and drag on the 2D map to select an area; the
+  summed score is shown as *Expression area* and the genes under the
+  selection fill the *Genes* tab (shown only while the 2D map is in front).
+- **Gene highlight** — list gene names to circle them on the map in a chosen
+  colour.
+- **Peak labels** — checkbox overlays gene names at detected peak/valley
+  positions (uses `ggrepel` if installed).
+- **3D surface** — interactive surface with an HTML download that keeps the
+  current view, and the camera printed as code for `leviSave3D()`.
+- **Progress indicator** — shown while the landscape or the permutation test
+  is computed.
+- **Download buttons** — 2D map (TIFF, BMP, JPEG, PNG), 3D surface (HTML),
+  node score, peak and region tables (CSV).
+
+The interface is described with screenshots in `vignette("levi")`.
+
+---
+
+# Visualization parameters
+
+| Parameter | Range | Effect |
+|:---|:---:|:---|
+| `contrastValueInput` | 0–100 | Contrast stretch of the colour scale |
+| `resolutionValueInput` | 1–100 | Grid resolution (higher = finer landscape) |
+| `zoomValueInput` | 0–100 | Spatial zoom (higher = wider neighbourhood) |
+| `smoothValueInput` | 0–100 | Gaussian kernel width |
+
+## Colour palettes
+
+```{r palettes, eval=FALSE}
+# Multicolor (default)
+levi(..., setcolor = "default")
+
+# Two-color options
+levi(..., setcolor = "purple_pink")
+levi(..., setcolor = "green_blue")
+levi(..., setcolor = "blue_yellow")
+levi(..., setcolor = "pink_green")
+levi(..., setcolor = "orange_purple")
+levi(..., setcolor = "green_marine")
+```
+
+---
+
+# Session Information
+
+```{r session}
+sessionInfo()
+```
+
+## Signal contracts and reproducibility
+
+Signal interpretation: `ratio` preserves Test/(Test + Control), with no min-max
+rescaling; equal nonzero inputs give 0.5. `expressionLog = TRUE` back-transforms
+log2 inputs only in this mode. A single ratio column means abundance/(abundance + 1),
+not a comparison with a control. `logfc` accepts two log-scale columns or one
+already computed logFC, mapping zero to 0.5. `zscore` centres on the mean logFC
+of measured network support points, not on biological absence of change.
+Missing measurements are assigned 0.5 and listed in `result$metadata`.
+Gaussian smoothing mixes neighbouring signals, so these baseline statements
+apply to the input signals and to uniformly neutral networks.
+
+Permutation inference is conditional on the fixed network and layout. Measured
+gene values are shuffled as pairs and edge midpoints are recalculated; missing
+positions stay fixed. In the default regional mode the maximum regional mass
+over both directions is the reference statistic, which controls the search
+across regions without a further adjustment. In cell mode both tails over
+occupied cells form one multiple-testing family per comparison, adjusted with
+`p_adjust_method` ("BY" by default); `result$raw_pvalues` retains the
+unadjusted values. `perm_side` selects the displayed side without changing
+either family.
+This is not a test of differential expression between biological replicates;
+increasing `n_perm` alone does not validate inferential use. Calibration across
+networks, layouts and missingness patterns still requires simulation studies.
+
+Call `set.seed()` before permutation runs. `result$metadata` records the RNG
+state, network, coordinates, signal mode, grid settings and software versions.
+`leviDiff()` rejects incompatible metadata or grid coordinates. For DESeq2,
+edgeR and limma adapters, select the logFC column against itself with
+`signal_mode = "logfc"`; abundance annotations are not control measurements.
+For edgeR, select the contrast in `glmLRT()` or `glmQLFTest()` before calling
+`leviFromEdgeR()` on the resulting test object. KEGG uses the supplied universe,
+converting both selected genes and background to ENTREZID with the same OrgDb.
+
+# References

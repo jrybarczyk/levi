@@ -1,0 +1,301 @@
+---
+title: "levi: Calibration and a real dataset"
+author:
+  - name: José Luiz Rybarczyk Filho
+    affiliation: São Paulo State University (UNESP)
+    email: jose.luiz@unesp.br
+date: "`r Sys.Date()`"
+bibliography: bibliography.bib
+link-citations: true
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+vignette: >
+  %\VignetteIndexEntry{levi: Calibration and a real dataset}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    collapse  = TRUE,
+    comment   = "#>",
+    fig.align = "center",
+    fig.width = 7,
+    fig.height = 4.5,
+    message   = FALSE
+)
+library(levi)
+library(ggplot2)
+extdata <- function(...) system.file("extdata", ..., package = "levi")
+```
+
+# Why this vignette exists
+
+The unit tests of levi prove that the code computes what the documentation
+says. They do not prove that a p-value of 0.03 means what a reader expects.
+That needs simulation: data generated with no effect must produce p-values
+that are uniform, or conservative, and the family-wise error rate must stay at
+the nominal level. This vignette reports such a study and then applies the
+same tests to a real RNA-seq experiment.
+
+Bioconductor builds every vignette on every commit, with a time budget. The
+simulations here took about an hour on four cores, so they are **not** run
+when the package is built. They were produced once by
+`inst/scripts/10-calibration.R`, and only small summary tables ship with the
+package. The vignette loads those tables and draws them; every chunk below
+runs in seconds. The same holds for the real dataset: DESeq2 and the STRING
+query were run once by `inst/scripts/11-airway-preprocess.R`, and the vignette
+loads a few kilobytes of text files. Both scripts are self-contained and
+re-run with `Rscript`.
+
+```{r calibration-files}
+val <- extdata("validation")
+list.files(val)
+```
+
+# Type I error under the global null
+
+Each replicate is a dataset with no effect anywhere: independent normal
+values for every gene (node-label test) or 4 vs 4 samples drawn from the same
+distribution (sample-label tests). The **family-wise error rate** is the
+fraction of replicates in which the smallest p-value of the test fell at or
+below 0.05. Every levi test controls its search with a maximum statistic
+[@Westfall1993; @Nichols2002], so this fraction should be at most 0.05.
+
+Two networks were used: the 30-node network shipped as `medusa.dat`, and a
+300-node scale-free graph (Barabási-Albert, m = 2) laid out with
+Kamada-Kawai [@Kamada1989], closer in size and degree distribution to a STRING module.
+
+```{r type1}
+type1 <- read.csv(file.path(val, "type1_error.csv"))
+type1$fwer_ci <- sprintf("%.3f (%.3f - %.3f)", type1$fwer,
+    pmax(0, type1$fwer - 1.96 * type1$fwer_se),
+    pmin(1, type1$fwer + 1.96 * type1$fwer_se))
+knitr::kable(type1[, c("test", "network", "design", "replicates",
+                       "fwer_ci", "no_region")],
+    col.names = c("Test", "Network", "Design", "Replicates",
+                  "FWER at 0.05 (95% CI)", "No region detected"),
+    caption = "Family-wise error rate under the global null. The last column
+    is the fraction of null replicates in which no region beyond the
+    threshold existed, so the landscape test had nothing to reject.")
+```
+
+The distribution of the smallest p-value per replicate tells more than one
+number. If the test were exact and there were a single region, the curve
+would sit on the diagonal; with several regions and the maximum taken over
+all of them, the smallest p-value is stochastically larger than uniform and
+the curve sits **below** the diagonal. What must not happen is a curve above
+the diagonal at the left, which would mean anti-conservative p-values.
+
+```{r null-ecdf, fig.height=4}
+files <- list.files(val, pattern = "^null_pvalues_", full.names = TRUE)
+nulls <- do.call(rbind, lapply(files, read.csv))
+nulls <- nulls[is.finite(nulls$min_p), ]
+ggplot(nulls, aes(x = min_p, colour = test)) +
+    stat_ecdf(geom = "step", linewidth = 0.8) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed",
+                colour = "grey40") +
+    geom_vline(xintercept = 0.05, linetype = "dotted", colour = "grey40") +
+    facet_wrap(~ network) +
+    coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+    labs(x = "smallest p-value in a null replicate",
+         y = "cumulative fraction of replicates", colour = NULL) +
+    theme_minimal(base_size = 12) +
+    theme(legend.position = "bottom")
+```
+
+# Power against effect size
+
+The hub of each network and its seven nearest neighbours form the responding
+module. Their treated samples are shifted by `effect` standard deviations in
+a 4 vs 4 design. Power is the probability that at least one region (or, for
+TFCE, at least one gene) reaches p <= 0.05 under the sample-label null. The
+two tests answer the replication question on the same data, one through the
+landscape and one directly on the graph.
+
+```{r power}
+power <- read.csv(file.path(val, "power.csv"))
+ggplot(power, aes(x = effect, y = power, colour = test, group = test)) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 2) +
+    geom_hline(yintercept = 0.05, linetype = "dotted", colour = "grey40") +
+    facet_wrap(~ network) +
+    scale_y_continuous(limits = c(0, 1)) +
+    labs(x = "shift of the hub module (standard deviations)",
+         y = "power at alpha = 0.05", colour = NULL) +
+    theme_minimal(base_size = 12) +
+    theme(legend.position = "bottom")
+```
+
+Two things stand out. First, the graph test is uniformly more powerful than
+the landscape test on the same data: it works on the nodes and edges
+directly, whereas the landscape spreads an eight-gene module over a Gaussian
+kernel and asks whether the resulting *area* beats the largest area anywhere
+on the map. Second, on the 300-node graph the landscape test has almost no
+power at any effect size tried: eight shifted genes among three hundred, at
+the default smoothing, produce a region whose excess mass is diluted by their
+unchanged neighbours and by the edge midpoints that connect them to the rest
+of the network. That is the degree weighting described in `?levi` at work.
+The landscape is a map for reading spatial organisation; when the question
+is "does this module respond", `leviGraphTFCEInference()` or
+`leviGraphClusterInference()` is the right tool, and the landscape is the
+figure that shows *where* it sits.
+
+With only 70 label arrangements the p-value floor is 1/70, so power cannot
+approach one smoothly; it saturates when the observed arrangement is the most
+extreme of the seventy in nearly every replicate.
+
+# How much does the layout matter?
+
+The landscape is drawn over coordinates, and force-directed layouts are
+stochastic. The same 300-node graph and the same expression data were laid
+out twenty times with Fruchterman-Reingold [@Fruchterman1991], and the
+node-label regional test
+was run on each. Sensitivity to the layout can only be measured where the
+test rejects, so the effect is deliberately large: a 20-gene module around
+the hub shifted by 3 SD, with smoothing 20. Per layout the table reports the
+smallest regional p-value, the number of genes attributed to significant
+regions (`leviRegionGenes()` with the five strongest supporters per region,
+so a single significant region yields at most five genes) and the fraction
+of the true module among them; the summary gives the mean pairwise Jaccard
+similarity of those gene sets. TFCE, which never
+looks at coordinates, gives one answer for all twenty.
+
+```{r layout}
+lay <- read.csv(file.path(val, "layout_sensitivity.csv"))
+lay_summary <- read.csv(file.path(val, "layout_sensitivity_summary.csv"))
+knitr::kable(lay_summary, digits = 3,
+    col.names = c("Mean pairwise Jaccard of significant genes", "Layouts",
+                  "TFCE smallest p (layout-free)"))
+summary(lay[, c("min_p", "n_regions", "n_sig_genes", "module_recovered")])
+```
+
+This is the quantitative form of a statement made throughout the
+documentation: a node-label landscape test is a statement about *this*
+drawing of the network. It is a legitimate exploratory instrument, and the
+regional p-value is honest about its own null, but conclusions that must not
+depend on the drawing belong to the graph-native tests.
+
+# A real dataset: dexamethasone in airway smooth muscle
+
+The `airway` experiment [@Himes2014] measured RNA-seq in four airway
+smooth muscle cell lines, each treated with dexamethasone and left untreated.
+DESeq2 [@Love2014] with `~ cell + dex` was run once, offline; the 80 genes
+with the strongest response that STRING [@Szklarczyk2021] recognised, their
+STRING interactions
+(combined score >= 400) with a Kamada-Kawai layout, and their per-sample
+log2 CPM were saved as text files. The provenance is in
+`inst/extdata/airway/README.md`.
+
+```{r airway-load}
+aw <- function(f) extdata("airway", f)
+genes   <- read.delim(aw("airway_dex_genes.tsv"))
+logcpm  <- as.matrix(read.delim(aw("airway_dex_logcpm.tsv"), row.names = 1))
+samples <- read.delim(aw("airway_dex_samples.tsv"))
+nodes   <- read.delim(aw("airway_string_nodes.tsv"))
+edges   <- read.delim(aw("airway_string_edges.tsv"))
+c(genes = nrow(genes), nodes = nrow(nodes), edges = nrow(edges))
+table(samples$cell, samples$dex)
+```
+
+## The landscape and its node-label test
+
+```{r airway-landscape, fig.height=6}
+set.seed(1)
+land <- levi(
+    expressionInput          = genes,
+    networkCoordinatesInput  = nodes,
+    networkInteractionsInput = edges,
+    fileTypeInput            = "stg",
+    geneSymbolInput          = "Symbol",
+    readExpColumn            = readExpColumn("log2FoldChange-log2FoldChange"),
+    signal_mode              = "logfc",
+    logfc_k                  = 0.7,
+    resolutionValueInput     = 30,
+    smoothValueInput         = 40,
+    n_perm                   = 199)
+land$regions$summary[, c("Region", "Direction", "Cells", "Mass", "PSpatial",
+                         "Significant")]
+head(leviRegionGenes(land, top_n = 5), 10)
+```
+
+The null here asks whether the 80 fold-changes are arranged on this drawing
+more coherently than a random assignment of the same values would be. All 80
+genes were selected *because* they respond to dexamethasone, so a strong
+result says the responders that interact are also drawn together, which is
+what a STRING layout of co-responding genes tends to produce. It says nothing
+about replication.
+
+## Replication: the sample-label tests
+
+The eight samples allow the sample-label null. The natural model blocks on
+cell line, because the cell-line effect is large; but blocking leaves only
+2^4 = 16 within-line label swaps and a p-value floor of 0.0625. levi says so:
+
+```{r airway-blocked}
+groups <- samples$dex
+tfce_blocked <- tryCatch(
+    leviGraphTFCEInference(logcpm, groups, nodes, edges, fileTypeInput = "stg",
+        test = "trt", control = "untrt", blocks = samples$cell),
+    warning = function(w) conditionMessage(w))
+tfce_blocked
+```
+
+Ignoring the blocks gives 70 arrangements at the price of a noisier
+statistic. This is the trade-off a four-donor paired design imposes, and no
+amount of permutation can escape it.
+
+```{r airway-unblocked}
+tfce <- leviGraphTFCEInference(logcpm, groups, nodes, edges,
+    fileTypeInput = "stg", test = "trt", control = "untrt")
+head(tfce$statistic[order(tfce$statistic$PGlobal), ], 8)
+
+set.seed(1)
+rep_land <- leviReplicateInference(logcpm, groups, test = "trt",
+    control = "untrt", networkCoordinatesInput = nodes,
+    networkInteractionsInput = edges, fileTypeInput = "stg",
+    logfc_k = 0.7, resolutionValueInput = 30, smoothValueInput = 40)
+rep_land$regions$summary[, c("Region", "Direction", "Mass", "PSpatial",
+                             "Significant")]
+```
+
+## Is it the wiring?
+
+```{r airway-rewiring}
+scores <- setNames(genes$stat, genes$Symbol)
+set.seed(1)
+rew <- leviGraphRewiringInference(scores, nodes, edges, fileTypeInput = "stg",
+                                  threshold = 4, n_perm = 199)
+# The STRING network of 78 responders is sparse (80 edges), so most
+# clusters are single genes; show the connected ones.
+clusters <- rew$regions$summary
+clusters[clusters$Nodes >= 2,
+         c("Region", "Direction", "Nodes", "Mass", "PeakGene", "PSpatial")]
+```
+
+The rewiring null [@Maslov2002] keeps every gene's Wald statistic and every
+node's degree and asks whether the clusters of strong responders need the specific STRING
+wiring. A small p-value here means the responding genes are connected to
+*each other* more than their degrees alone would predict.
+
+# Reproducing the study
+
+```{r scripts, eval=FALSE}
+scripts <- system.file("scripts", package = "levi")
+# About an hour on four cores; writes inst/extdata/validation/*.csv
+system2("Rscript", c(file.path(scripts, "10-calibration.R"), "4", "300"))
+# A few minutes plus the STRING download; writes inst/extdata/airway/*.tsv
+system2("Rscript", file.path(scripts, "11-airway-preprocess.R"))
+```
+
+# Session information
+
+```{r session}
+sessionInfo()
+```
+
+# References

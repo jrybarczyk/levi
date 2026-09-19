@@ -1,317 +1,245 @@
-levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
-    networkInteractionsInput, geneSymbolnput, readExpColumn, contrastValueInput,
-    zoomValueInput, resolutionValueInput, smoothValueInput, expressionLog,
-    contourLevi, setcolor) {
+utils::globalVariables(c("x", "y", "xend", "yend", "PeakRow", "PeakCol", "Label"))
 
-    colorSet <- function(x, colorType=c("default", "terrain", "rainbow","heat",
-        "topo", "cm", "purple_pink", "green_blue", "blue_yellow", "pink_green",
-        "orange_purple", "green_marine")) {
-        colorType <- match.arg(colorType)
-        defaultColors <- function(n) {
-            c("#180052", "#0c0083","#0000b4", "#0000e4","#0010ff", "#0041ff",
-              "#0072ff", "#00A3FF", "#00D4FF", "#00FF49","#5AFF00", "#FFE400",
-              "#FFC400", "#FFA300", "#FF8300", "#FF6200", "#FF4100", "#FF2100",
-              "#FF0000", "#E40000")
-        }
-        purple_pink <- function(n) {
-            c("#4e5052", "#b387e6", "#ff0000")
-        }
-        green_blue <- function(n) {
-            c("#4e5052", "#a4db56", "#1d02c9")
-        }
-        blue_yellow <- function(n) {
-            c("#4e5052", "#27b0cf", "#ffec2b")
-        }
-        orange_purple <- function(n){
-            c("#4e5052", "#fcbb63", "#7300c4")
-        }
-        green_marine <- function(n){
-            c("#4e5052", "#5df0b0", "#360d94")
-        }
-        pink_green <- function(n){
-            c("#4e5052", "#e854d9", "#90db56")
-        }
-        color_list <- list(
-            default = defaultColors,
-            terrain = terrain.colors,
-            rainbow = rainbow,
-            heat = heat.colors,
-            topo = topo.colors,
-            cm = cm.colors,
-            purple_pink = purple_pink,
-            green_blue = green_blue,
-            blue_yellow = blue_yellow,
-            orange_purple = orange_purple,
-            green_marine = green_marine,
-            pink_green = pink_green
-        )
+levi_function <- function(expressionInput, fileTypeInput, networkCoordinatesInput,
+    networkInteractionsInput, geneSymbolInput, readExpColumn,
+    contrastValueInput, zoomValueInput, resolutionValueInput,
+    smoothValueInput, expressionLog, contourLevi, setcolor,
+    plot3d = FALSE, n_perm = 0, sig_level = 0.05,
+    perm_side = c("both", "over", "under"),
+    signal_mode = c("ratio", "logfc", "zscore"), logfc_k = 1,
+    p_adjust_method = "BY", region_threshold = 0.1, region_min_cells = 3L,
+    .parsed_network = NULL, .draw = TRUE,
+    .progress = NULL, inference_unit = c("region", "cell"), perm_strata = NULL,
+    edge_weighting = c("midpoint", "degree", "none")) {
+    inference_unit <- match.arg(inference_unit)
+    edge_weighting <- match.arg(edge_weighting)
+    perm_side   <- match.arg(perm_side)
+    signal_mode <- match.arg(signal_mode)
+    p_adjust_method <- match.arg(p_adjust_method, stats::p.adjust.methods)
+    .validateScalar(n_perm, "n_perm", 0, integer = TRUE)
+    .validateScalar(sig_level, "sig_level", 0, 1)
+    .validateScalar(logfc_k, "logfc_k", .Machine$double.eps)
+    .validateScalar(region_threshold, "region_threshold", .Machine$double.eps,
+                    0.5 - .Machine$double.eps)
+    .validateScalar(region_min_cells, "region_min_cells", 1, integer = TRUE)
 
-        if ((colorType == "default") || (colorType == "terrain") ||
-            (colorType == "rainbow") || (colorType == "heat") ||
-           (colorType == "topo") || (colorType == "cm")) {
-            colorSetRange <- color_list[[colorType]](20)
+
+
+
+    fileType <- match.arg(fileTypeInput, c("dat", "dyn", "stg", "net"))
+
+
+    leviResults <- vector("list", length(readExpColumn) - 1)
+
+    # ---------------------------------------------------------------------
+    # Invariant setup: image parameters, network parsing, graph and
+    # coordinates do not depend on the comparison, so they are done only once
+    # instead of on every iteration of the loop over readExpColumn.
+    # ---------------------------------------------------------------------
+    #Configuration of contrast, resolution, smothing and zoom
+    #contrast -> silhouette occupancy threshold.
+    # More contrast = higher threshold = tighter silhouette around the network.
+    {contrastValue <- contrastValueInput}
+    if (contrastValue < 0) {contrastValue <- 0}
+    if (contrastValue > 100) {contrastValue <- 100}
+    occFrac <- 0.002 + 0.096 * (contrastValue/100)
+
+    #resolution
+    {resolutionValue <- resolutionValueInput}
+    if (resolutionValue > 100) {resolutionValue <- 100}
+    if (resolutionValue < 1) {resolutionValue <- 1}
+    resolutionValue<-as.integer((resolutionValue/100)*210+30)
+
+    #smothing -> sigma of the Gaussian kernel, in grid cells.
+    # Proportional to resolutionValue so that the apparent smoothing does not
+    # change when the user alters the resolution.
+    {smoothValue <- smoothValueInput}
+    if (smoothValue < 0) {smoothValue <- 0}
+    if (smoothValue > 100) {smoothValue <- 100}
+    sigmaCells <- (0.005 + 0.08 * (smoothValue/100)) * resolutionValue
+    if (sigmaCells < 0.35) {sigmaCells <- 0.35}
+
+    #zoom -> margin of the grid around the network, in coordinate units
+    # (the network spans [0, 1] on its longer axis).
+    # The silhouette reaches beyond the outermost node as far as the kernel
+    # carries occupancy above occFrac, about sigma * sqrt(-2 log occFrac)
+    # cells, plus one cell for the bilinear deposit. The grid always leaves
+    # at least that much room, so the landscape is never clipped; the zoom
+    # adds up to 20% of the network extent on top of it (zoom 0 = widest
+    # frame, zoom 100 = frame that just fits the silhouette). Before 2.0.0
+    # the margin was the zoom alone and the default cut the silhouette
+    # whenever a node sat near the border.
+    {zoomValue <- zoomValueInput}
+    if (zoomValue < 0) {zoomValue <- 0}
+    if (zoomValue > 100) {zoomValue <- 100}
+    zoomFraction <- zoomValue/100
+    # The margin itself is computed once the support points are known, below.
+
+    nameBase <- expressionInput
+    networkNodes <- networkCoordinatesInput
+    networkEdges <- networkInteractionsInput
+    geneSymbol<- geneSymbolInput
+    parsed <- .parsed_network %||% .parseNetwork(networkNodes, networkEdges, fileType)
+    nodes <- parsed$nodes
+    edges <- parsed$edges
+
+
+    #Remove"NA" and "-" from expression file
+        if (is.character(nameBase)) {
+            expression <- read.delim(file = nameBase, header = TRUE,
+                sep = "\t", quote = "")
+        } else if (is.data.frame(nameBase) || is.matrix(nameBase)) {
+            expression <- as.data.frame(nameBase)
         } else {
-
-            colorSetRange <- color_list[[colorType]](3)
-
-        return(colorSetRange)
+            stop("expressionInput must be a file path, data.frame, or matrix")
         }
+
+        # Validated here, before the first indexing below: the later check in
+        # the comparison loop only runs after these subsets, which failed with
+        # the unhelpful "undefined columns selected".
+        if (!is.character(geneSymbol) || length(geneSymbol) != 1L ||
+            is.na(geneSymbol) || !(geneSymbol %in% names(expression))) {
+            stop("'geneSymbolInput' must name one column of the expression ",
+                "data. Got \"", paste(geneSymbol, collapse = ", "),
+                "\"; the columns available are: ",
+                paste(names(expression), collapse = ", "), call. = FALSE)
+        }
+
+        expression <- subset(expression,expression[,paste(geneSymbol)] !=
+        "NA")
+        expression <- subset(expression,expression[,paste(geneSymbol)] !=
+        "-")
+        expression <- unique(expression)
+        head_express <- as.list(names(expression))
+    if (fileType == "dat"){
+        edges <- edges[, c(1, 2)]
+        nodes <- as.data.frame(nodes)
+        nodes[, c(2)] <- vapply(nodes[, c(2)], as.double, numeric(1))
     }
 
-    fileTypeFun <- function(x, filecheck=c("dat", "dyn", "stg", "net")){
-        filecheck <- match.arg(filecheck)
-
-        return(filecheck)
+    if (fileType == "net"){
+        nodes <- as.data.frame(nodes)
     }
 
-    fileType <- fileTypeFun(x, fileTypeInput)
+    if (fileType == "dyn"){
+        nodes <- as.data.frame(nodes)
+    }
+
+    if (fileType == "stg"){
+        nodes <- as.data.frame(nodes)
+    }
+
+    nodes <- nodes[order(nodes[, 1]), ]
+
+
+    nodes$V1 <- as.character(nodes$V1)
+    nodes$V2 <- as.numeric(nodes$V2)
+    nodes$V3 <- as.numeric(nodes$V3)
+    nodesCoord <- aggregate(nodes[, 2:3], nodes[1], mean)
+    nodesForMerge <- nodesCoord
+    edges <- unique(edges[, 1:2])
+    edge_index <- cbind(match(as.character(edges[, 1]), nodesCoord$V1),
+                        match(as.character(edges[, 2]), nodesCoord$V1))
+    if (anyNA(edge_index))
+        stop("Every edge endpoint must have network coordinates.")
+    nnodes <- nrow(nodesCoord)
+    coord <- rbind(as.matrix(nodesCoord[, 2:3]),
+        (as.matrix(nodesCoord[edge_index[, 1], 2:3]) +
+         as.matrix(nodesCoord[edge_index[, 2], 2:3])) / 2)
+    if (!all(is.finite(coord))) stop("Network coordinates must be finite.")
+    support_weights <- .supportWeights(nnodes, edge_index, edge_weighting)
+
+    # normalization and centralization
+    minCoordX <- min(coord[,c(1)])
+    maxCoordX <- max(coord[,c(1)])
+    centroX <- (minCoordX+maxCoordX)/2
+    minCoordY <- min(coord[,c(2)])
+    maxCoordY <- max(coord[,c(2)])
+    centroY <- (minCoordY+maxCoordY)/2
+
+    coordRange <- max(maxCoordX - minCoordX, maxCoordY - minCoordY)
+    if (coordRange == 0) coordRange <- 1
+    centroX <- centroX/coordRange
+    centroY <- centroY/coordRange
+
+    coord[,c(1)] <- (coord[,c(1)]/coordRange)+(0.5-centroX)
+    coord[,c(2)] <- (coord[,c(2)]/coordRange)+(0.5-centroY)
+
+    # Grid margin. The silhouette keeps the cells whose occupancy exceeds
+    # occFrac times that of an isolated point; W points stacked near the
+    # border push it out to about sigma * sqrt(2 log(W / occFrac)) cells,
+    # plus one cell for the bilinear deposit. Solving
+    # m >= reachCells * (1 + 2m) / (resolutionValue - 1) for the margin m.
+    # W is the largest kernel-weighted stack of support points around any
+    # point (the occupancy at that point relative to an isolated one). For
+    # very large networks the total weight is used as an upper bound instead
+    # of the n x n distance matrix.
+    sigmaCoord <- sigmaCells * 1.4 / (resolutionValue - 1)
+    stackWeight <- if (nrow(coord) <= 3000L) {
+        d2 <- as.matrix(stats::dist(coord))^2
+        max(colSums(support_weights * exp(-d2 / (2 * sigmaCoord^2))))
+    } else sum(support_weights)
+    stackWeight <- max(stackWeight, 1)
+    reachCells <- sigmaCells * sqrt(2 * log(stackWeight / occFrac)) + 1
+    denominator <- resolutionValue - 1 - 2 * reachCells
+    reachMargin <- if (denominator > 0) reachCells / denominator else 1
+    reachMargin <- min(reachMargin, 1)
+    gridFor <- function(margin) {
+        zoomValue <- -margin
+        list(zoom = zoomValue, increase = (1 + 2 * margin) / (resolutionValue - 1))
+    }
+    # That bound is generous, so the silhouette is measured once on the
+    # generous grid (occupancy depends on coordinates and weights only, not
+    # on the signal) and the frame is tightened to what it actually needs,
+    # plus two cells of safety. zoom 100 then frames the silhouette exactly
+    # and zoom 0 adds 20% of the network extent around it.
+    probeGrid <- gridFor(reachMargin)
+    dummy <- matrix(0.5, nrow(coord), 1L)
+    probe <- landscape_gauss(coord = coord, SignalOut = dummy, signalExp = dummy,
+        signalCtrl = dummy, resolutionValue = resolutionValue,
+        zoomValue = probeGrid$zoom, increase = probeGrid$increase,
+        sigma = sigmaCells, occFrac = occFrac, weights = support_weights)$m1
+    inside <- which(!is.na(probe), arr.ind = TRUE)
+    if (nrow(inside)) {
+        lo <- probeGrid$zoom + (apply(inside, 2, min) - 1) * probeGrid$increase
+        hi <- probeGrid$zoom + (apply(inside, 2, max) - 1) * probeGrid$increase
+        needed <- max(0, -lo, hi - 1) + 2 * probeGrid$increase
+        reachMargin <- min(needed, reachMargin)
+    }
+    finalGrid <- gridFor(reachMargin + 0.2 * (1 - zoomFraction))
+    zoomValue <- finalGrid$zoom
+    increase <- finalGrid$increase
 
 
     for (k in seq(2,length(readExpColumn))) {
-
+        rng_state <- if (exists(".Random.seed", envir = .GlobalEnv))
+            get(".Random.seed", envir = .GlobalEnv) else NULL
         columnComb<- do.call('rbind',
             strsplit(as.character(readExpColumn[k]),'-',
             fixed=TRUE))
 
-            #Configuration of contrast, resolution, smothing and zoom
-            #contrast
-            {contrastValue <- contrastValueInput}
-            if (contrastValue < 0) {contrastValue <- 0}
-            if (contrastValue > 100) {contrastValue <- 99}
-            contrastValue<-(contrastValue/100)
-            contrastValue<-0.1-(0.1*contrastValue)
-
-            #resolution
-            {resolutionValue <- resolutionValueInput}
-            if (resolutionValue > 100) {resolutionValue <- 100}
-            if (resolutionValue < 1) {resolutionValue <- 1}
-            resolutionValue<-as.integer((resolutionValue/100)*210+30)
-
-            #zoom
-            {zoomValue <- zoomValueInput}
-            if (zoomValue < 0) {zoomValue <- 0}
-            if (zoomValue > 100) {zoomValue <- 100}
-            zoomValue<-(zoomValue/100)
-            zoomValue<-(0.2*zoomValue)-0.2
-
-            #smothing
-            {smoothValue <- smoothValueInput}
-            smoothValue=(smoothValue/100)*18
-            smoothValue=as.integer(smoothValue)
-            if (smoothValue <= 0) {smoothValue <- 1}
-
-
-            a<-sqrt(zoomValue*zoomValue)
-            b<-1+a-zoomValue
-            gamaValue<-sqrt(b^2 + b^2)
-            increase<-b/(resolutionValue-1)
-
-            nameBase <- expressionInput
-            networkNodes<- networkNodesInput
-            networkEdges <- networkInteractionsInput
-            geneSymbol<- geneSymbolnput
             baseTest<- columnComb[,1]
             baseControl<- columnComb[,2]
 
-
-        switch(fileType,
-                dat={
-
-                    networkNodes <- read.delim(file = networkNodes,
-                    header = FALSE, sep = "\t",
-                    stringsAsFactors=FALSE, fill = TRUE, col.names =
-                    paste0("V",seq_len(max(count.fields(networkNodes,
-                    sep = '\t')))))
-
-
-                    delimiter <- which(networkNodes == "*nodes")
-
-                    edges <- slice(networkNodes, 3:delimiter-1)
-                    edges <- edges[,c(1,2)]
-                    nodes <- slice(networkNodes,
-                        delimiter+1:nrow(networkNodes))
-                    nodes <- nodes[,c(1,2,3)]},
-
-                stg={
-                    nodes <- read.delim(file = networkNodes, header = TRUE,
-                        sep = "\t", stringsAsFactors=FALSE, fill = TRUE)
-                    edges <- read.delim(file = networkEdges, header = TRUE,
-                        sep = "\t", stringsAsFactors=FALSE, fill = TRUE)
-
-                    edges <- edges[,c(1,2)]
-                    nodes <- nodes[,c(1,2,3)]
-                    colnames(edges) <- c("V1", "V2")
-                    colnames(nodes) <- c("V1", "V2", "V3")},
-
-                net={
-                    net_read <- read.delim(file = networkNodes, header = FALSE,
-                        stringsAsFactors=FALSE)
-
-                    delimiter_edge <- which(net_read == "*Edges")
-                    edges <- data_frame()
-
-                    edges_sl <- as.data.frame(slice(net_read,
-                        delimiter_edge+1:nrow(net_read)))
-
-                    delimiter_nodes_end <- which(net_read == "*Edges")
-                    nodes_sl <- as.data.frame(slice(net_read,
-                        3:delimiter_nodes_end-1))
-                    nodes <- data_frame()
-                        for (i in seq_len(nrow(nodes_sl))) {
-                            nodes_rt <- read.table(text =
-                            as.character(nodes_sl[i,1]), sep = " ")
-
-                            nodes_ft <- Filter(function(x)!all(is.na(x)),
-                            nodes_rt)
-                            nodes_ft <- nodes_ft[,c(1,2,3,4)]
-                            colnames(nodes_ft) <- c("V1", "V2","V3", "V4")
-                            nodes_ft <- data.frame(lapply(nodes_ft, function(x)
-                                {gsub("FALSE", "F", x)}),
-                                stringsAsFactors = FALSE)
-                            nodes_ft <- data.frame(lapply(nodes_ft, function(x)
-                                {gsub("TRUE", "T", x)}),
-                                stringsAsFactors = FALSE)
-                            nodes <-rbind(nodes, nodes_ft)
-                            }
-
-                        for (i in seq_len(nrow(edges_sl))) {
-                            edges_rt <- read.table(text =
-                            as.character(edges_sl[i,1]), sep = " ")
-                            edges_ft <- Filter(function(x)!all(is.na(x)),
-                            edges_rt)
-                            edges_ft <- edges_ft[,c(1,2)]
-                            colnames(edges_ft) <- c("V1", "V2")
-                            edges <-rbind(edges, edges_ft)
-
-                        }
-
-
-                        net_mg<- merge(edges, nodes, by.x = "V1", by.y = "V1",
-                        all.x = FALSE)
-                        colnames(net_mg) <- c("a", "b", "c", "d", "e")
-                        net_mg<- merge(net_mg, nodes, by.x = "b", by.y = "V1",
-                        all.x = FALSE)
-                        edges <- net_mg[,c(3,6)]
-                        colnames(edges) <- c("V1", "V2")
-
-                        nodes <- nodes[,c(2,3,4)]
-                        colnames(nodes) <- c("V1", "V2", "V3")
-                        nodes <-nodes
-                        edges <- edges
-                        },
-
-                dyn={
-                        tf <- tempfile(tmpdir = tdir <- tempdir())
-                        dyn_files <- unzip(networkNodes, exdir = tdir)
-                        dyn_read <- read_xml(dyn_files , stringsAsFactors=FALSE)
-
-
-                        dyn_label <- xml_find_all(dyn_read,
-                        xpath = "//*/*/@label")
-                        vals <- trimws(xml_text(dyn_label))
-                        dyn_df = as.data.frame(vals, stringsAsFactors = FALSE)
-
-                        dyn_id <- xml_find_all(dyn_read, xpath = "//*/*/@id")
-                        vals_id <- trimws(xml_text(dyn_id))
-                        nodes <- as.data.frame(slice(dyn_df, 1:length(vals_id)))
-                        nodes$V1 <- seq(0,nrow(nodes)-1)
-
-                        dyn_source <- xml_find_all(dyn_read,
-                        xpath = "//*/*/@source")
-                        dyn_target <- xml_find_all(dyn_read,
-                        xpath = "//*/*/@target")
-                        dyn_x <- xml_find_all(dyn_read, xpath = "//*/*/@x")
-                        dyn_y <- xml_find_all(dyn_read, xpath = "//*/*/@y")
-
-                        datasource_tmp <- as.data.frame(lapply(dyn_source, gsub,
-                        pattern = "source=",
-                        replacement = "", fixed = TRUE))
-                        datasource <- as.data.frame(lapply(datasource_tmp, gsub,
-                        pattern = "\"",
-                        replacement = "", fixed = TRUE),
-                        stringsAsFactors = FALSE)
-                        colnames(datasource) <- NULL
-
-                        datatarget_tmp <- as.data.frame(lapply(dyn_target, gsub,
-                        pattern = "target=",
-                        replacement = "", fixed = TRUE))
-
-                        datatarget <- as.data.frame(lapply(datatarget_tmp, gsub,
-                        pattern = "\"",
-                        replacement = "", fixed = TRUE),
-                        stringsAsFactors = FALSE)
-                        colnames(datatarget) <- NULL
-                        datateste <- as.data.frame(cbind(t(datasource),
-                        t(datatarget)),
-                        stringsAsFactors = FALSE)
-
-                        datax_tmp <- as.data.frame(lapply(dyn_x, gsub,
-                        pattern = "x=",
-                        replacement = "", fixed = TRUE))
-                        datax <- as.data.frame(lapply(datax_tmp, gsub,
-                        pattern = "\"",
-                        replacement = "", fixed = TRUE),
-                        stringsAsFactors = FALSE)
-                        colnames(datax) <- NULL
-
-                        datay_tmp <- as.data.frame(lapply(dyn_y, gsub,
-                        pattern = "y=",
-                        replacement = "", fixed = TRUE))
-                        datay <- as.data.frame(lapply(datay_tmp, gsub,
-                        pattern = "\"",
-                        replacement = "", fixed = TRUE),
-                        stringsAsFactors = FALSE)
-                        colnames(datay) <- NULL
-
-                        edges <- datateste
-                        edges$V1 = as.numeric(edges$V1)
-                        edges$V2 = as.numeric(edges$V2)
-
-                        t1<- merge(edges, nodes, by.x = "V1", by.y = "V1")
-                        colnames(t1) <- c("a", "b", "c")
-                        t1<- merge(t1, nodes, by.x = "b", by.y = "V1",
-                        all.x = FALSE)
-                        edges <- as.matrix(t1[,c(3,4)])
-                        colnames(edges) <- c("V1", "V2")
-
-                        edges <- edges
-
-                        nodes <- as.data.frame(cbind(nodes[,1], t(datax),
-                        t(datay)), stringsAsFactors = FALSE)
-
-                        nodes$V1 = as.character(nodes$V1)
-                        nodes$V2 = as.numeric(nodes$V2)
-                        nodes$V3 = as.numeric(nodes$V3)
-                        nodes <- nodes
-                        }
-
-        )
-
-
-        #Remove"NA" and "-" from expression file
-            expression <- read.delim(file = nameBase, header = TRUE,
-            sep = "\t", quote = "")
-
-            expression <- subset(expression,expression[,paste(geneSymbol)] !=
-            "NA")
-            expression <- subset(expression,expression[,paste(geneSymbol)] !=
-            "-")
-            expression <- unique(expression)
-            head_express = as.list(names(expression))
             if (baseControl == " ") {
                 baseControl <- baseTest
             }
             arguments <- list(geneSymbol, baseTest, baseControl)
             for (i in seq(arguments)){
                 if (!is.element(arguments[i], head_express) ) {
-                    stop(paste0("This argument do not exist in this dataframe:
-                    ", arguments[i]))}
+                    stop("Column not found in the expression data: ",
+                         arguments[i])}
             }
-            if (expressionLog) {
-                expressSelect =expression[,c(geneSymbol, baseTest, baseControl)]
-                expressSelect[,2:3] <- 2^expressSelect[,2:3]
-            } else {
-                expressSelect =expression[,c(geneSymbol, baseTest, baseControl)]
+            expressSelect <- expression[, c(geneSymbol, baseTest, baseControl)]
+            # Back-transform from log2 only for ratio mode.
+            # logfc/zscore modes compute logFC = Test - Control directly,
+            # so log2 values must NOT be exponentiated first.
+            if (expressionLog && signal_mode == "ratio") {
+                expressSelect[, 2:3] <- 2^expressSelect[, 2:3]
+            } else if (expressionLog && signal_mode != "ratio") {
+                message("Note: expressionLog = TRUE is ignored when ",
+                        "signal_mode = '", signal_mode, "'. ",
+                        "Log2 values are used directly to compute logFC.")
             }
             newExpression <- aggregate(x = expressSelect[c
                  (baseControl,baseTest)],
@@ -320,72 +248,31 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
                      mean(media_valor)
                      })
 
+            # Repeated identifiers are averaged, which is what mapping probes
+            # onto symbols calls for. Say so: two contradictory measurements
+            # average to the neutral point, and a silently neutral gene reads
+            # exactly like a gene that genuinely did not change.
+            collapsed <- nrow(expressSelect) - nrow(newExpression)
+            if (collapsed > 0)
+                message(collapsed, " duplicated identifier(s) in the ",
+                    "expression data were averaged into ",
+                    nrow(newExpression), " unique entries.")
 
-        if (fileType == "dat"){
-            edges <-select(edges, 1,2)
-            nodes <- as.data.frame(nodes)
-            nodes[, c(2)] <- sapply(nodes[, c(2)], as.double)
-        }
-
-        if (fileType == "net"){
-            nodes <- as.data.frame(nodes)
-        }
-
-        if (fileType == "dyn"){
-            nodes <- as.data.frame(nodes)
-        }
-
-        if (fileType == "stg"){
-            nodes <- as.data.frame(nodes)
-        }
-
-        nodes <- arrange(nodes, nodes[,c(1)])
 
 
         #signalCoordMerge have values of controle and test
-        signalCoordMerge <- merge(nodes, newExpression, by.x = "V1",
+        signalCoordMerge <- merge(nodesForMerge, newExpression, by.x = "V1",
             by.y = geneSymbol,
             all.x = TRUE)
         #signalCoordMerge[is.na(signalCoordMerge)] <- 0
-        listLink<- unique(edges[,c(1,2)])
-
-        graph_edge <- graph.edgelist(as.matrix(listLink), directed = FALSE)
-        edgesGraph <- as_long_data_frame(graph = graph_edge)
-
-        colnames(edgesGraph) <- NULL
-        colnames(edgesGraph) <- c("a", "b", "c", "V1")
-        nodes$V1 = as.character(nodes$V1)
-        nodes$V2 = as.numeric(nodes$V2)
-        nodes$V3 = as.numeric(nodes$V3)
-        nodesCoord <- aggregate(x = nodes[,c(2:3)], by = nodes[1], FUN = mean)
-
-
-        #######################################################################
-        #merge edgesGraph and nodesCoord
-        edgesNodesMerge <- merge(edgesGraph, nodesCoord, by.x = "c",
-            by.y = "V1",
-            all.x = TRUE)
-        edgesNodesMerge <- merge(edgesNodesMerge, nodesCoord, by.x = "V1",
-            by.y = "V1",
-            all.x = TRUE)
-        edgesNodesMerge <- edgesNodesMerge[,c(3,4,2,1,5,6,7,8)]
-
-        edgesNodesMerge$V2 <- (edgesNodesMerge[,c(5)] +
-            edgesNodesMerge[,c(7)])/2
-        edgesNodesMerge$V3 <- (edgesNodesMerge[,c(6)] +
-            edgesNodesMerge[,c(8)])/2
-
-        edgesSignalMerge <- merge(edgesGraph, signalCoordMerge, by.x = "c",
-            by.y = "V1", all.x = TRUE)
-        edgesSignalMerge <- merge(edgesSignalMerge, signalCoordMerge,
-            by.x = "V1", by.y = "V1", all.x = TRUE)
-        naColumnA <- as.matrix(
-            edgesSignalMerge[!complete.cases(edgesSignalMerge[,5]),2],
-            stringsAsFactors = FALSE)
-        naColumnB <- as.matrix(
-            edgesSignalMerge[!complete.cases(edgesSignalMerge[,9]),1],
-            stringsAsFactors = FALSE)
-        naTotal <- unique(rbind(naColumnA, naColumnB))
+        # Nodes whose identifier found no match in the expression table.
+        # The check has to run on signalCoordMerge, which holds one row per
+        # node: edgesSignalMerge repeats a node once per edge, and its column
+        # positions shift with every merge, so fixed indices into it silently
+        # stopped pointing at the expression columns.
+        naTotal <- as.matrix(unique(
+            signalCoordMerge[!is.finite(signalCoordMerge[[baseTest]]) |
+                             !is.finite(signalCoordMerge[[baseControl]]), 1]))
 
         #Create title for chart
         if (baseTest == baseControl) {
@@ -396,202 +283,281 @@ levi_function <- function(expressionInput, fileTypeInput, networkNodesInput,
 
         #Creates log if exists nodes without expression value
         if (length(naTotal) > 0) {
-            message(paste0(
-                "There are ",nrow(naTotal)," nodes without expression value,
-                see log in path: ",
-                file.path(tempdir(),titleChart, "levi.log")))
-            if (!file.exists(file.path(tempdir(), titleChart))){
-                dir.create(file.path(tempdir(), titleChart))
+            logDir <- file.path(tempdir(), titleChart)
+            if (!dir.exists(logDir)) dir.create(logDir, recursive = TRUE)
+            logPath <- file.path(logDir, "levi.log")
+            writeLines(as.vector(naTotal), logPath)
+
+            if (nrow(naTotal) == nrow(signalCoordMerge)) {
+                # No identifier matched at all. The landscape comes out
+                # uniformly neutral, which is indistinguishable from a dataset
+                # with no variation, so this has to be a warning and not a note.
+                warning("None of the ", nrow(signalCoordMerge),
+                    " network nodes matched an identifier in the expression ",
+                    "data, so the landscape is uniformly neutral and carries ",
+                    "no information. Check that 'geneSymbolInput' names the ",
+                    "right column and that the network and the expression ",
+                    "data use the same identifier type. Node names: ",
+                    logPath, call. = FALSE)
+            } else {
+                message("There are ", nrow(naTotal), " nodes without ",
+                    "expression value, see log in path: ", logPath)
             }
-
-            file.path(tempdir(),titleChart, "levi.log")
-            levi_log <- file(file.path(tempdir(),titleChart, "levi.log"),
-            open = "wt")
-            sink(levi_log)
-            sink(levi_log, type = "message")
-            warning(as.vector(naTotal))
-            sink(type = "message")
-            sink()
         }
 
-        edgesSignalMerge <- edgesSignalMerge[,c(3,4,2,1,5,6,7,8,9,10,11,12)]
-
-        edgesSignalMerge$V2 <- (edgesSignalMerge[,c(8)] +
-        edgesSignalMerge[,c(12)])/2
-        edgesSignalMerge$V3 <- (edgesSignalMerge[,c(7)] +
-        edgesSignalMerge[,c(11)])/2
-        ########################################################################
-
-        nnodes <- nrow(nodes)
-        nedges <- nrow(edges)
-        numberAll<-nnodes+nedges
-        coordAll <- rbind(nodesCoord[,c(2,3)], edgesNodesMerge[,c(9,10)])
-
-        signalExpAll <- data.frame(V1 = c(signalCoordMerge[,c(5)],
-        edgesSignalMerge[,c(13)]))
-        signalCtrlAll <- data.frame(V1 = c(signalCoordMerge[,c(4)],
-        edgesSignalMerge[,c(14)]))
-
-
-        numberCoord <- numberAll
-        coord <- as.matrix(coordAll)
-        signalExp <- as.matrix(signalExpAll)
-
-        if (baseTest == baseControl){
-            signalCtrl <- matrix(data = 1, ncol = 1, nrow = nrow(signalCtrlAll))
-        } else {
-            signalCtrl <- as.matrix(signalCtrlAll)
+        single_col <- (baseTest == baseControl)
+        node_values <- cbind(signalCoordMerge[[baseTest]],
+                             signalCoordMerge[[baseControl]])
+        resolved_strata <- NULL
+        if (!is.null(perm_strata)) {
+            if (!is.atomic(perm_strata))
+                stop("'perm_strata' must be an atomic vector.", call. = FALSE)
+            if (!is.null(names(perm_strata)))
+                resolved_strata <- perm_strata[as.character(signalCoordMerge$V1)]
+            else if (length(perm_strata) == nrow(node_values))
+                resolved_strata <- perm_strata
+            else stop("Unnamed 'perm_strata' must have one value per network node.",
+                      call. = FALSE)
+            measured_here <- rowSums(is.finite(node_values)) == ncol(node_values)
+            if (anyNA(resolved_strata[measured_here]))
+                stop("'perm_strata' is missing a stratum for a measured node.",
+                     call. = FALSE)
+            resolved_strata <- as.character(resolved_strata)
         }
-        signalExp[is.na(signalExp)] <- 0.5
-        signalCtrl[is.na(signalCtrl)] <- 0.5
-        SignalOut<-signalExp/(signalExp+signalCtrl)
+        signals <- .networkSignals(node_values, edge_index, single_col,
+                                    signal_mode, logfc_k)
+        SignalOut <- signals$signal
+        signalExp <- signals$test
+        signalCtrl <- signals$control
+        numberCoord <- nrow(SignalOut)
 
-
-        a <- max(signalExp)
-        b <- max(signalCtrl)
-        signalExp<-((signalExp/a)*0.95)+0.05
-        signalCtrl<-((signalCtrl/b)*0.95)+0.05
-
-        # normalization and centralization
-        a<-min(coord[,c(1)])
-        b<-max(coord[,c(1)])
-        centroX<-(a+b)/2
-        c<-min(coord[,c(2)])
-        d<-max(coord[,c(2)])
-        centroY<-(c+d)/2
-
-
-        if (b >= d) {e <- b}
-        if (d > b) {e <- d}
-        centroX <- centroX/e
-        centroY <- centroY/e
-
-        coord[,c(1)]<- (coord[,c(1)]/e)+(0.5-centroX)
-        coord[,c(2)]<-(coord[,c(2)]/e)+(0.5-centroY)
-
-        #Applies the calculation and takes the smallest value for coordinates
-        #coord
-
-
-        coordPiso <- SigCoordPiso(coord= coord,
-        resolutionValue = resolutionValue,gamaValue= gamaValue,
-        increase = increase,  contrastValue = contrastValue,
-        zoomValue=zoomValue, numberCoord=numberCoord)
-
-
-        matrix_resultado <- matrix_entrada(coordPiso= coordPiso,
-        SignalOut= SignalOut,
-        coord= coord, resolutionValue= resolutionValue,
-        signalExp = signalExp, signalCtrl = signalCtrl, increase= increase,
-        zoomValue= zoomValue, numberCoord= numberCoord)
-
-        matrixIn <- as.matrix(matrix_resultado$m1)
-        h <- matrix_resultado$m3
-
-        h<-h-1
-
-
-        matrixFinal <- matrix_saida(matrixIn =  matrixIn,
-        resolutionValue = resolutionValue, gamaValue =  gamaValue,
-        increase = increase, zoomValue = zoomValue, h = h,
-        smoothValue = smoothValue)
-
+        # Landscape by normalised convolution. Each cell value is the average
+        # of the signals weighted by a Gaussian kernel, rather than the mean
+        # over the k nearest points. Because the sum of the weights appears
+        # in the denominator, the result is always a convex average of the
+        # signals:
+        # the scale no longer depends on the smoothing or the network density.
+        matrixFinal <- landscape_gauss(
+            coord           = coord[seq_len(numberCoord), , drop = FALSE],
+            SignalOut       = SignalOut,
+            signalExp       = signalExp,
+            signalCtrl      = signalCtrl,
+            resolutionValue = resolutionValue,
+            zoomValue       = zoomValue,
+            increase        = increase,
+            sigma           = sigmaCells,
+            occFrac         = occFrac,
+            weights         = support_weights)
 
         matrixOut <- matrixFinal$m1
-        matrixOutExp <- matrixFinal$m2
-        matrixOutCtrl <- matrixFinal$m3
-
-
-        n<-resolutionValue
+        n <- resolutionValue
         i <- seq_len(n)
-        j <- seq_len(n-1)
-        b <- max(matrixOutExp[i, j+1])
-        c <- max(matrixOutCtrl[i, j+1])
-
-
-        matrixOutExp[i, i] <- matrixOutExp[i, i]/b
-        matrixOutCtrl[i, i] <- matrixOutCtrl[i, i]/c
-
         ExpCtrl <- matrixOut[i, rev(i)]
-        exp <- matrixOutExp[i, rev(i)]
-        ctrl <- matrixOutCtrl[i, rev(i)]
 
-
-        if (baseTest == baseControl){
-            landgraph <- melt(exp, value.name = "z")
-        } else {
-            landgraph <- melt(ExpCtrl, value.name = "z")
-        }
+        landgraph <- melt(ExpCtrl, value.name = "z")
 
         landgraphFinal <- as.data.frame(landgraph[,c(1,2,3)])
 
 
-        matrixSize <- sqrt(NROW(landgraphFinal))
+        landgraphChart <- .buildLandscapeChart(landgraphFinal, setcolor,
+            titleChart, contourLevi) +
+            ggplot2::labs(caption = .signalMeaning(signal_mode, single_col))
 
+        # -- 1. Node landscape scores --
+        nodeCoordNorm <- coord[seq_len(nnodes), , drop = FALSE]
+        xIdx <- pmin(pmax(
+            round((nodeCoordNorm[, 1] - zoomValue) / increase) + 1L, 1L),
+            resolutionValue)
+        yIdx <- pmin(pmax(
+            round((nodeCoordNorm[, 2] - zoomValue) / increase) + 1L, 1L),
+            resolutionValue)
+        # A node whose cell falls outside the silhouette returns NA; in that
+        # case the node's own signal is used, which is the value the convolution
+        # would tend to give.
+        nodeScores <- mapply(function(xi, yi) matrixOut[xi, yi], xIdx, yIdx)
+        naScore <- is.na(nodeScores)
+        if (any(naScore))
+            nodeScores[naScore] <- SignalOut[seq_len(nnodes), 1][naScore]
 
-        if (missing(contourLevi) || contourLevi == TRUE) {
-            landgraphChart <-ggplot(data = landgraphFinal,
-                aes(x = Var1, y = Var2))+
-                geom_raster(aes(fill = z), interpolate = TRUE, hjust = 0.5,
-                vjust = 0.5) +
-                geom_contour(aes(z = z)) +
-                scale_fill_gradientn(colours=colorSet(x, setcolor),
-                values=c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45,
-                0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1),
-                breaks=seq(0,1,0.2), limits=c(0,1),
-                guide = guide_colorbar(title="Expression Level",
-                title.position = "right", title.hjust = 0.5,
-                title.theme = element_text(angle = 270, size = 9),
-                barwidth= 1,barheight = 10)) +
-                theme_void() +
-                ggtitle(titleChart) +
-                theme(plot.title = element_text(
-                margin = margin(t = 10, b = -10), hjust = 0.5,lineheight=.8,
-                face="bold"),legend.margin=margin(0,0,0,-20)) +
-                annotate("text", x = c(matrixSize+2,matrixSize+2),
-                y = c(matrixSize*0.42,matrixSize*0.6),
-                label = c("decrease", "increase"),size=3 , angle=90) +
-                annotate("segment", x = matrixSize*1.07, xend = matrixSize*1.07,
-                y = matrixSize*0.49, yend = matrixSize*0.35, colour = "black",
-                size=0.2, alpha=0.6, arrow=arrow(type = "closed",
-                length = unit(x = c(0.2), units = "cm"))) +
-                annotate("segment", x = matrixSize*1.07, xend = matrixSize*1.07,
-                y = matrixSize*0.51, yend = matrixSize*0.67, colour = "black",
-                size=0.2,alpha=0.6, arrow=arrow(type = "closed",
-                length = unit(x = c(0.2), units = "cm"))) +
-                coord_fixed(ratio = 1)
-        } else {
-            landgraphChart <-ggplot(data = landgraphFinal,
-                aes(x = Var1, y = Var2))+
-                geom_raster(aes(fill = z), interpolate = TRUE,
-                            hjust = 0.5, vjust = 0.5) +
-                scale_fill_gradientn(colours=colorSet(x, setcolor),
-                values=c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45,
-                0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1),
-                breaks=seq(0,1,0.2), limits=c(0,1),
-                guide = guide_colorbar(title="Expression Level",
-                title.position = "right", title.hjust = 0.5,
-                title.theme = element_text(angle = 270, size = 9), barwidth= 1,
-                barheight = 10)) +
-                theme_void() +
-                ggtitle(titleChart) +
-                theme(plot.title =
-                element_text(margin = margin(t = 10, b = -10), hjust = 0.5,
-                lineheight=.8, face="bold"), legend.margin=margin(0,0,0,-20)) +
-                annotate("text", x = c(matrixSize+2,matrixSize+2),
-                y = c(matrixSize*0.42,matrixSize*0.6),
-                label = c("decrease", "increase"), size=3 , angle=90) +
-                annotate("segment", x = matrixSize*1.07, xend = matrixSize*1.07,
-                y = matrixSize*0.49, yend = matrixSize*0.35, colour = "black",
-                size=0.2, alpha=0.6, arrow=arrow(type = "closed",
-                length = unit(x = c(0.2), units = "cm"))) +
-                annotate("segment", x = matrixSize*1.07, xend = matrixSize*1.07,
-                y = matrixSize*0.51, yend = matrixSize*0.67, colour = "black",
-                size=0.2, alpha=0.6, arrow=arrow(type = "closed",
-                length = unit(x = c(0.2), units = "cm"))) +
-                coord_fixed(ratio = 1)
+        scoreTable <- data.frame(
+            Gene           = as.character(nodesCoord[, 1]),
+            X              = as.numeric(nodesCoord[, 2]),
+            Y              = as.numeric(nodesCoord[, 3]),
+            LandscapeScore = round(nodeScores, 4),
+            stringsAsFactors = FALSE
+        )
+        scoreTable <- scoreTable[
+            order(scoreTable$LandscapeScore, decreasing = TRUE), ]
+        scoreTable$Rank <- seq_len(nrow(scoreTable))
+        rownames(scoreTable) <- NULL
+
+        # -- 2. Automatic peak / valley detection --
+        peakTable <- .detectPeaks2D(
+            matrixOut, coord, nnodes, nodesCoord,
+            zoomValue, increase, resolutionValue
+        )
+        regions <- .extractLandscapeRegions(
+            matrixOut, zoomValue, increase,
+            threshold = region_threshold, min_cells = region_min_cells)
+
+        # -- 3. Permutation significance test --
+        pvalMatrix <- rawPvalues <- NULL
+        if (n_perm > 0L) {
+            message("Permutation test: ", n_perm, " iterations for '",
+                    titleChart, "'...")
+
+            pvalMatrix <- .permutationPvalues(
+                coord           = coord[seq_len(numberCoord), , drop = FALSE],
+                SignalOut       = SignalOut,
+                signalExp       = signalExp,
+                signalCtrl      = signalCtrl,
+                matrixOut       = matrixOut,
+                resolutionValue = resolutionValue,
+                zoomValue       = zoomValue,
+                increase        = increase,
+                sigma           = sigmaCells,
+                occFrac         = occFrac,
+                n_perm          = n_perm,
+                progress        = .progress,
+                node_values     = node_values,
+                edge_index      = edge_index,
+                single_col      = single_col,
+                signal_mode     = signal_mode,
+                logfc_k         = logfc_k,
+                regions         = if (inference_unit == "region") regions else NULL,
+                perm_strata     = resolved_strata,
+                weights         = support_weights)
+            if (inference_unit == "region") {
+                regions <- pvalMatrix
+                pvalMatrix <- NULL
+                regions$summary$Significant <- regions$summary$PSpatial <= sig_level
+                selected <- regions$summary$Region[regions$summary$Significant &
+                    (perm_side == "both" | regions$summary$Direction == perm_side)]
+                boundary <- .regionBoundaries(regions, n, selected)
+                if (nrow(boundary)) landgraphChart <- landgraphChart +
+                    ggplot2::geom_segment(data = boundary,
+                        ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
+                        colour = "white", linewidth = 0.8, inherit.aes = FALSE)
+            } else {
+            rawPvalues <- pvalMatrix
+            pvalMatrix <- .adjustLandscapePvalues(rawPvalues, p_adjust_method)
+
+            # Dashed contour = significantly over-expressed region,
+            # dotted = significantly under-expressed.
+            if (perm_side %in% c("both", "over"))
+                landgraphChart <- .significanceContour(landgraphChart,
+                    pvalMatrix$over, i, sig_level, "dashed",
+                    "over-expression")
+            if (perm_side %in% c("both", "under"))
+                landgraphChart <- .significanceContour(landgraphChart,
+                    pvalMatrix$under, i, sig_level, "dotted",
+                    "under-expression")
+            }
         }
-        landgraphChart <- landgraphChart + coord_fixed(ratio = 1)
-        print(landgraphChart)
+
+        # -- Peak labels on the plot --
+        if (inference_unit == "region" && nrow(regions$summary)) {
+            area_labels <- regions$summary
+            # With a permutation test, label only the regions that pass
+            # sig_level (the ones that are outlined); every region carrying
+            # "p = 1.000" made the figure unreadable. Without a test the
+            # regions are descriptive and keep their names.
+            if ("PSpatial" %in% names(area_labels)) {
+                area_labels <- area_labels[area_labels$PSpatial <= sig_level &
+                    (perm_side == "both" | area_labels$Direction == perm_side), ,
+                    drop = FALSE]
+                area_labels$Label <- sprintf("%s\np = %.3f", area_labels$Region,
+                                             area_labels$PSpatial)
+            } else {
+                area_labels$Label <- area_labels$Region
+            }
+            if (nrow(area_labels)) landgraphChart <- landgraphChart + ggplot2::geom_label(
+                data = area_labels,
+                ggplot2::aes(x = PeakRow, y = n + 1L - PeakCol, label = Label),
+                size = 3, inherit.aes = FALSE)
+        }
+        if (inference_unit != "region" && !is.null(peakTable) && nrow(peakTable) > 0) {
+            label_df <- data.frame(
+                x     = peakTable$MatrixRow,
+                y     = n + 1L - peakTable$MatrixCol,
+                label = peakTable$NearestGene,
+                stringsAsFactors = FALSE)
+            if (requireNamespace("ggrepel", quietly = TRUE)) {
+                landgraphChart <- landgraphChart +
+                    ggrepel::geom_text_repel(
+                        data = label_df,
+                        aes(x = x, y = y, label = label),
+                        colour = "white", size = 2.5, fontface = "bold",
+                        box.padding = 0.3, max.overlaps = 20,
+                        inherit.aes = FALSE)
+            } else {
+                landgraphChart <- landgraphChart +
+                    geom_text(data = label_df,
+                              aes(x = x, y = y, label = label),
+                              colour = "white", size = 2.5, fontface = "bold",
+                              inherit.aes = FALSE)
+            }
+        }
+
+        if (.draw) methods::show(landgraphChart)
+
+        # -- 3D surface (optional) --
+        fig3d <- NULL
+        if (isTRUE(plot3d)) {
+            z_matrix <- ExpCtrl
+            fig3d <- .buildSurface3D(z_matrix, .colorSet(setcolor), titleChart,
+                pvalMatrix, i, sig_level, perm_side)
+            if (!is.null(fig3d)) methods::show(fig3d)
+        }
+
+        leviResults[[k - 1]] <- structure(
+            list(
+                comparison = titleChart,
+                landscape  = landgraphFinal,
+                scores     = scoreTable,
+                peaks      = peakTable,
+                regions    = regions,
+                pvalues    = pvalMatrix,
+                plot       = landgraphChart,
+                # The plotly surface used to be shown and then thrown away,
+                # so there was no way to save or restyle it the way $plot
+                # allows for the 2D figure. NULL when plot3d = FALSE.
+                plot3d     = fig3d,
+                raw_pvalues = rawPvalues,
+                metadata = list(
+                    signal_mode = signal_mode, single_col = single_col,
+                    logfc_k = logfc_k, expressionLog = expressionLog && signal_mode == "ratio",
+                    meaning = .signalMeaning(signal_mode, single_col),
+                    nodes = nodesCoord, edges = edge_index,
+                    node_coordinates = nodeCoordNorm,
+                    node_signal = as.numeric(SignalOut[seq_len(nnodes), 1]),
+                    edge_weighting = edge_weighting,
+                    support_weights = support_weights,
+                    grid = list(resolution = resolutionValue, zoom = zoomValue,
+                                increase = increase, sigma = sigmaCells, occupancy = occFrac),
+                    region_threshold = region_threshold,
+                    region_min_cells = region_min_cells,
+                    region_definition = "8-connected grid cells beyond neutral score",
+                    missing_genes = as.character(naTotal),
+                    n_perm = n_perm, sig_level = sig_level,
+                    p_adjust_method = p_adjust_method,
+                    inference_unit = inference_unit,
+                    permutation_strata = resolved_strata,
+                    inference = if (inference_unit == "region")
+                        "node-label randomisation; maximum regional mass over both directions" else
+                        "node-label randomisation; both tails over occupied grid cells",
+                    rng_kind = RNGkind(), rng_state = rng_state,
+                    versions = c(R = as.character(getRversion()),
+                        levi = as.character(utils::packageVersion("levi")),
+                        Rcpp = as.character(utils::packageVersion("Rcpp"))))
+            ),
+            class = "levi_result"
+        )
+    }
+
+    if (length(leviResults) == 1L) {
+        invisible(leviResults[[1]])
+    } else {
+        invisible(leviResults)
     }
 }

@@ -1,0 +1,13 @@
+*edges
+GA	GB	i 1	c 1.0	o 0.0
+GB	GC	i 1	c 1.0	o 0.0
+GC	GD	i 1	c 1.0	o 0.0
+GD	GE	i 1	c 1.0	o 0.0
+GE	GF	i 1	c 1.0	o 0.0
+*nodes
+GA	0.10	0.50
+GB	0.28	0.50
+GC	0.46	0.50
+GD	0.54	0.50
+GE	0.72	0.50
+GF	0.90	0.50

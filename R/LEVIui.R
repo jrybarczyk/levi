@@ -1,35 +1,64 @@
-#' @title LEVIui
-#' @description Launch the Levi Graphical User Interface (GUI) in local machine.
-#' @details This function launch the LEVI Graphical User Interface. The
-#' interface provides the same tools available in the script mode. There are
-#' two tools only available in the user interface: 1) Selection of area from
-#' heatmap to calculate the gene expression levels in the area selected;
-#' 2) Selection of the genes in some specific area from the image.
-#' @usage LEVIui(browser)
-#' @param browser This argument is necessary to launch Levi GUI. To launch Levi
-#' in the web browser the argument required "TRUE". To launch Levi in the R
-#' environment the argument required "FALSE". The default is "FALSE"
-#' @return return a GUI
-#' @export
-#' @author José Rafael Pilan <rafael.pilan@unesp.br> &
-#' Isabelle Mira da Silva (isabelle.silva@unesp.br)
-#' @examples
-#' LEVIui(browser)
-#' #LEVIui(browser=TRUE)  #Launch Levi to Browser.
-#' #LEVIui(borwser=FALSE) #Launch Levi to R environment.
+﻿#' @title LEVIui - Interactive Shiny GUI for levi
 #'
+#' @description Launch the \pkg{levi} graphical user interface (GUI) locally
+#' via Shiny. The GUI exposes all parameters available in script mode and
+#' additionally provides:
+#' \itemize{
+#'   \item Interactive brushable region selection on the landscape heatmap
+#'         (returns gene scores for the selected area).
+#'   \item Gene search - type a gene symbol to highlight its position with a
+#'         yellow circle on the landscape.
+#'   \item Peak label overlay (\emph{requires} \pkg{ggrepel}).
+#'   \item Signal transformation mode selector (\code{ratio}, \code{logfc},
+#'         \code{zscore}) and \code{logfc_k} steepness control.
+#'   \item Interactive 3D surface (\emph{requires} \pkg{plotly}), carrying
+#'         the same significance boundary as the 2D map.
+#'   \item Permutation significance test with per-iteration progress bar.
+#'   \item Download buttons for the landscape plot, node score table, and
+#'         peak/valley table (CSV).
+#' }
+#'
+#' @param browser Logical. \code{TRUE} opens the app in the system web browser;
+#'   \code{FALSE} (default) opens it in the RStudio Viewer pane.
+#'
+#' @return Runs the Shiny application; does not return an R value.
+#'
+#' @details
+#' The GUI is a full-featured interface to \code{\link{levi}}. All file
+#' uploads, parameter sliders, and result downloads are handled interactively.
+#' For reproducible, automated, or batch analyses use \code{\link{levi}}
+#' directly in script mode.
+#'
+#' The app is located in \code{inst/shiny/} and can also be launched with
+#' \code{shiny::runApp(system.file("shiny", package = "levi"))}.
+#'
+#' @seealso \code{\link{levi}}, \code{\link{readExpColumn}}
+#'
+#' @author Jose Rafael Pilan \email{rafael.pilan@@unesp.br},
+#'   Isabelle Mira da Silva
+#'
+#' @examples
+#' if (interactive()) {
+#'     LEVIui(browser = FALSE)   # opens in RStudio Viewer
+#'     LEVIui(browser = TRUE)    # opens in system browser
+#' }
+#'
+#' @export
 
-LEVIui <-function(browser){
-tryCatch({
-    if (!is(browser, "logical"))
-        stop("'browser' must be a TRUE or FALSE")
+LEVIui <- function(browser = FALSE) {
+    if (!is.logical(browser) || length(browser) != 1L || is.na(browser))
+        stop("'browser' must be a single TRUE or FALSE value.", call. = FALSE)
+
+    appDir <- system.file("shiny", package = "levi")
+    if (!nzchar(appDir))
+        stop("The Shiny application was not found in the installed package. ",
+            "Reinstall levi with BiocManager::install('levi').", call. = FALSE)
+
+    # launch.browser is only set when TRUE: leaving it unset lets RStudio open
+    # the app in its Viewer pane, which is what browser = FALSE promises.
     if (browser) {
-        shiny::runApp(system.file("shiny",package="levi"),
-        launch.browser = TRUE)
+        shiny::runApp(appDir, launch.browser = TRUE)
     } else {
-        shiny::runApp(system.file("shiny",package="levi"))
+        shiny::runApp(appDir)
     }
-},
-error = function(e) {print("Parameter must be TRUE or FALSE")
 }
-)}

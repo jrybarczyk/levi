@@ -1,1 +1,275 @@
-* first version of levi
+Changes in version 1.99.0
+
+Overview
+
+    o This is the Bioconductor devel version of the rewritten package; it
+      will be released as levi 2.0.0. The landscape core was rebuilt, an
+      inference layer with permutation tests was added, the Shiny interface
+      now shares every computation with script mode, and adapters bring
+      data in from the main Bioconductor and single-cell workflows.
+
+Landscape core
+    o The landscape is computed as a Gaussian-kernel weighted average
+      (normalised convolution) instead of an unweighted mean over the k
+      nearest points. Every landscape value is a convex combination of the
+      input signals and lies within their range; data with no variation
+      gives the neutral value 0.5 at any smoothing and any network density.
+    o The previous implementation injected a zero-signal point at every
+      background grid cell, which divided the landscape amplitude by k
+      (about 11% of the colour scale at the default smoothing), put
+      result$scores off the documented [0, 1] scale and made peaks
+      unreachable on sparse networks. All ten Expected results assertions
+      of the bundled toy datasets now pass (three passed before).
+    o The network silhouette is carried by the sum of kernel weights.
+      Cells outside the network return NA and are drawn in a background
+      colour, so "no network here" and "network present, minimal
+      expression" are no longer the same value.
+    o The kernel is separable, so the convolution runs as two 1-D passes.
+      medusa.dat at resolution 135 went from 28.5 s to about 12 ms and the
+      cost no longer grows with network size.
+    o New argument edge_weighting in levi(): "midpoint" (default) keeps
+      the historical deposit of one support point per edge midpoint,
+      "degree" weights the midpoint of edge (i, j) by (1/d_i + 1/d_j)/2 so
+      the midpoints around any node add up to one, and "none" smooths the
+      node values alone. The choice and the weights are recorded in the
+      result metadata and reused by the sample-label null.
+    o The grid always leaves room for the smoothed silhouette. The margin
+      used to be the zoom alone, while the kernel carries occupancy about
+      20% beyond the outermost node, so landscapes were clipped wherever a
+      node sat near the border. zoomValueInput now adds up to 20% on top
+      of a frame that fits the silhouette (0 = widest, 100 = tightest).
+    o contrastValueInput and smoothValueInput keep their 0-100 range but
+      now set the occupancy threshold of the silhouette and the Gaussian
+      width in grid cells. The width is scaled to resolutionValueInput, so
+      changing the resolution no longer changes the apparent smoothing,
+      and smoothing no longer changes the value scale.
+    o The same transformed signal feeds the surface, the scores, the peaks
+      and the tests. Ratio scores keep the absolute Test/(Test+Control)
+      scale; the old max() normalisation of the per-condition matrices was
+      dropped.
+    o SigCoordPiso(), matrix_entrada() and matrix_saida() were replaced by
+      landscape_gauss(); nearest_node_grid() labels each grid cell with its
+      closest node.
+
+Signal modes and input guards
+    o New argument signal_mode: "ratio" (default) for counts, TPM, FPKM
+      and linear proteomics; "logfc" (sigmoid of the log fold change, with
+      steepness logfc_k) for RMA microarray, VST/rlog and single-cell
+      avg_log2FC; "zscore" for multi-condition or heterogeneous-scale
+      data. Single-column logFC input uses readExpColumn("logFC-logFC")
+      with signal_mode = "logfc".
+    o expressionLog back-transforms from log2 only in ratio mode; in the
+      other modes it is ignored with a message, because log-scale data
+      must stay in log2 for the fold change.
+    o Ratio mode warns when the expression data contain negative values,
+      which invert the landscape; Test + Control == 0 is reported and set
+      to the neutral score instead of escaping as Inf.
+    o The [0, 1] range of LandscapeScore is enforced for every signal mode
+      in one place and fixed by a test.
+    o Duplicated identifiers are still averaged, but the number collapsed
+      is reported; a warning is raised when no identifier of the network
+      matches the expression data, and a message states how many nodes
+      have no expression value.
+    o expressionInput accepts a data.frame or matrix as well as a file
+      path, and the stg branch accepts in-memory node and edge tables.
+    o The error for a missing expression column now reads "Column not
+      found in the expression data".
+
+Result object, scores, peaks and regions
+    o levi() returns an object of class "levi_result" with a print()
+      method summarising the comparison, the scored nodes, the score
+      range, the strongest and weakest genes, the peaks and valleys and
+      whether a permutation test ran. The fields are unchanged, so
+      result$scores and the rest keep working.
+    o result$scores ranks every gene by LandscapeScore in [0, 1];
+      result$peaks lists local maxima and minima with the nearest gene,
+      matrix position and score.
+    o Explicit eight-connected landscape regions with direction, area,
+      mass, peak, centroid and member cells. Without permutations they
+      remain descriptive; with them they carry regional p-values.
+    o Result provenance is recorded and leviDiff() rejects incompatible
+      comparisons.
+
+Inference layer
+    o Permutation test in levi() with n_perm, sig_level and perm_side
+      ("both", "over", "under"). result$pvalues holds $over and $under
+      matrices; 2D figures overlay the sig_level contours, dashed for
+      over-expression and dotted for under-expression, and the 3D surface
+      traces the same boundary.
+    o inference_unit = "region" (now the default) runs a maximum
+      excess-mass permutation test over eight-connected regions in both
+      directions, keeps the null maxima, reports a spatial p-value per
+      region and draws regional boundaries. inference_unit = "cell" keeps
+      the legacy per-cell test, which the Shiny contours still use. Both
+      directional families are adjusted jointly (BY by default) and the
+      raw p-values remain available.
+    o Node-label permutations shuffle only the signals, never the
+      coordinates, so the silhouette and the denominator are computed
+      once. p-values use (k+1)/(n+1), so none is reported as exactly 0.
+      Optional perm_strata shuffles within bins of expression, detection
+      rate or degree.
+    o New leviReplicateInference(): regional maximum-mass inference by
+      permuting biological sample labels, optionally within blocks.
+      Regional figures label only the regions that pass sig_level.
+    o New leviAdjustPathways() to correct regional results across a
+      family of pathway networks, and leviRegionGenes() to rank the genes
+      that contribute to a region.
+    o New graph statistics on the network itself: leviGraphMoran()
+      (global and local autocorrelation from the same permutations, with
+      BH-adjusted local p-values), leviGraphGetisOrd() (hotspots and
+      coldspots with PTwoSided and PAdjusted; Significant uses the
+      adjusted value), leviGraphSpectrum() (Laplacian smoothness and
+      low-frequency energy; the eigenvector order was corrected and the
+      decomposition is computed once) and leviGraphWeightedTopology().
+    o New sample-label graph tests: leviGraphClusterInference() for
+      connected cluster mass, leviGraphTFCEInference() for threshold-free
+      cluster enhancement, leviGraphTFCEFreedmanLane() for residual
+      permutation under covariates, leviGraphRewiringInference() and
+      leviGraphTFCERewiring() for degree-preserving rewiring nulls, and
+      leviBulkGraphInference() on DESeq2 counts.
+    o leviBulkGraphInference() keeps the observed size factors and
+      dispersions fixed across permutations by default
+      (refit_dispersions = FALSE) and uses one dispersion estimator for
+      the observed statistic and every draw, falling back to gene-wise
+      dispersions when the trend fit fails; the choice is returned as
+      dispersion_estimator.
+    o Single-cell pseudobulk tests: leviPseudobulk() aggregates counts per
+      sample and cell type; leviSingleCellRegionalInference(),
+      leviSingleCellGraphInference(), leviSingleCellTFCEInference(),
+      leviSingleCellInteractionTFCE() and
+      leviSingleCellTopologyInference() permute within donor. They use
+      TMM-normalised log2 CPM and the limma-trend moderated t
+      (normalize = "none" restores plain CPM) and drop genes with fewer
+      than 10 counts in two pseudobulks before the fit, always keeping the
+      network genes; the interaction coefficient is located by its exact
+      design column name.
+    o Graph TFCE builds the igraph object once per call and recomputes the
+      components only when the set of nodes above the threshold changes,
+      instead of rebuilding the graph at each of the 100 integration steps
+      of every permutation. The single-cell TFCE example runs in under a
+      second instead of about 6 s; results are identical.
+    o All permutation tests share one engine with a BPPARAM argument.
+      SerialParam is the default; MulticoreParam() and SnowParam() give
+      identical results because all randomness stays in the calling
+      process. Sparse adjacency matrices are used throughout (Matrix in
+      Imports).
+    o A warning states when a design cannot reach the significance level
+      (fewer than 1/alpha arrangements or draws), e.g. 3 vs 3 unblocked
+      gives a floor of 0.05. Arrangements are counted with choose()
+      before enumeration, so unblocked designs with more than about 30
+      samples no longer abort. Blocks holding a single condition
+      contribute one fixed arrangement instead of an error.
+
+Data adapters and network construction
+    o leviFromDESeq2(), leviFromEdgeR(), leviFromLimma() and
+      leviFromSeurat() convert differential expression tables to levi
+      input; leviFromSE(), leviFromExpressionSet() and leviFromBioc()
+      read SummarizedExperiment and ExpressionSet objects, selecting
+      samples by name, index or colData condition.
+    o leviFromSTRING() builds a network from the STRING database from a
+      vector of gene symbols, and leviFromEdges() builds one from a plain
+      edge list (data.frame, matrix or igraph graph), computing a layout
+      with igraph (fr, kk, lgl, dh or circle) scaled to the range levi
+      expects. Both share the same layout routine and report interactions
+      dropped for a missing endpoint.
+    o Network parsers live in one place, one per format (dat, dyn, net,
+      stg), and are shared by script mode and the interface.
+
+Comparison, enrichment and export helpers
+    o leviGrid() arranges several results side by side (patchwork,
+      cowplot or gridExtra); leviDiff() subtracts two landscapes cell by
+      cell into a diverging map.
+    o leviEnrich() runs GO and KEGG enrichment on the top and bottom genes
+      of result$scores through clusterProfiler; the KEGG background
+      identifier mapping was fixed.
+    o plot3d draws an interactive plotly surface next to the 2D map, with
+      the significance boundary when a test ran. New leviSave3D() writes
+      it to html, png, jpeg, webp, svg, pdf or tiff from a chosen camera
+      position.
+    o Contour layers drop out-of-silhouette cells before stat_contour()
+      and say when there is no curve to draw instead of warning.
+
+Shiny interface
+    o The interface no longer compiles its own copy of the C++ core at
+      startup and no longer keeps private copies of network parsing, the
+      permutation test, the palettes or the figure. It calls the same
+      routines as script mode, so no compiler is needed and the two paths
+      cannot drift (they had: the same palette name gave different
+      colours and the scale arrows sat at different heights).
+    o The 2D landscape and the 3D surface are shown in two tabs; the
+      gene, node score, peak and region tables are tabs of their own
+      below the figure, each with a CSV download. "Genes" lists what was
+      brushed on the map. The 3D tab has a "Download 3D (HTML)" button
+      that keeps the rotated view, and the toolbar PNG export was raised
+      to 1600 x 1200 at scale 2.
+    o Settings tab exposes signal_mode, logfc_k, n_perm, perm_side,
+      sig_level and a "Test unit" selector. The regional test runs by
+      default and the significant regions are outlined and labelled as in
+      script mode; a permutation progress bar reports each iteration.
+    o Gene highlight accepts several genes, draws one circle per gene at
+      its own grid cell and offers a colour selector; "Label peaks on map"
+      overlays gene names at the detected peaks.
+    o The interface could not compute anything under igraph >= 2.0
+      because a deprecation warning was caught as fatal and reported as
+      "Incorrect file format". graph_from_edgelist() is used and warnings
+      are shown as notifications while the computation continues; a file
+      without a trailing newline is read instead of rejected.
+    o tests/testthat/test_gui_parity.R drives the server with
+      shiny::testServer and requires the same scores, surface and, under
+      a fixed seed, the same p-values as script mode.
+
+Documentation, datasets and validation
+    o Four vignettes: "levi" (introduction, workflow and every control of
+      the interface, with new screenshots), "levi_guide" (Bioconductor
+      data, adapters and STRING), "levi_inference" (which null answers
+      which question, the p-value floor of small designs, BPPARAM and a
+      reporting checklist) and "levi_validation" (type I error, power and
+      layout sensitivity from offline simulations, plus the airway
+      dexamethasone experiment). All vignettes cite their methods and data
+      sources from a shared bibliography.
+    o Twelve self-contained scripts in inst/scripts/ with a README, from
+      first steps to degree weighting, calibration and the airway
+      preprocessing; they run on the bundled data alone.
+    o Toy datasets in inst/extdata/, each documented with expected
+      results: hub, gradient, bimodal, flat, sparse, logfc and
+      multi-comparison, beside the original medusa data, the airway
+      summaries and the validation tables.
+    o Real-data integration tests replay the analyses of the supplement
+      (airway, GSE10072 and Kang 2018 on STRING and KEGG networks) and are
+      skipped unless LEVI_INTEGRATION is set.
+    o Every argument of the inference functions is documented and the
+      examples run on the hub dataset. Examples that need objects the
+      user must supply (a DESeq2, edgeR, limma or Seurat fit, a
+      SummarizedExperiment, real gene symbols for STRING or
+      org.Hs.eg.db) are marked \dontrun so R CMD check --as-cran passes.
+    o Title, Description and biocViews describe the inference layer
+      (RNASeq, GraphAndNetwork and StatisticalMethod added). NAMESPACE
+      uses specific importFrom() directives; knitr, rmarkdown and
+      BiocStyle moved to Suggests. Comments, test names and messages are
+      all in English.
+
+Breaking changes
+    o The argument geneSymbolnput of levi() was renamed geneSymbolInput.
+      No alias is kept; positional calls are unaffected.
+    o Every landscape changes with the new core, so figures produced with
+      levi 1.x are not comparable to figures produced with this version.
+    o inference_unit defaults to "region"; use inference_unit = "cell"
+      for the former per-cell test.
+
+Bug fixes
+    o Operator precedence in the DAT parser (3:(delimiter-1)).
+    o C++ buffer overflow in the former matrix_saida() and matrixOutFun()
+      when smoothValue >= h.
+    o colorSet() returned inside an else block; duplicate coord_fixed()
+      call; deprecated size aesthetic in annotate() segments.
+    o Internal networkNodesInput renamed networkCoordinatesInput to match
+      the public API.
+    o edgeR test-object conversion, medusa validation on the linear ratio
+      scale with a matched smoking category, and the ".logFC" title on
+      replicate landscapes.
+
+Changes in version 1.0.0
+
+Overview
+
+    o First version of levi.

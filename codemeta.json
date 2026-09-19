@@ -7,7 +7,7 @@
   "codeRepository": "https://github.com/jrybarczyk/levi",
   "issueTracker": "https://github.com/jrybarczyk/levi/issues",
   "license": "https://spdx.org/licenses/GPL-2.0",
-  "version": "1.20.0",
+  "version": "1.99.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",

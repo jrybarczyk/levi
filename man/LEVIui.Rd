@@ -2,35 +2,56 @@
 % Please edit documentation in R/LEVIui.R
 \name{LEVIui}
 \alias{LEVIui}
-\title{LEVIui}
+\title{LEVIui - Interactive Shiny GUI for levi}
 \usage{
-LEVIui(browser)
+LEVIui(browser = FALSE)
 }
 \arguments{
-\item{browser}{This argument is necessary to launch Levi GUI. To launch Levi
-in the web browser the argument required "TRUE". To launch Levi in the R
-environment the argument required "FALSE". The default is "FALSE"}
+\item{browser}{Logical. \code{TRUE} opens the app in the system web browser;
+\code{FALSE} (default) opens it in the RStudio Viewer pane.}
 }
 \value{
-return a GUI
+Runs the Shiny application; does not return an R value.
 }
 \description{
-Launch the Levi Graphical User Interface (GUI) in local machine.
+Launch the \pkg{levi} graphical user interface (GUI) locally
+via Shiny. The GUI exposes all parameters available in script mode and
+additionally provides:
+\itemize{
+  \item Interactive brushable region selection on the landscape heatmap
+        (returns gene scores for the selected area).
+  \item Gene search - type a gene symbol to highlight its position with a
+        yellow circle on the landscape.
+  \item Peak label overlay (\emph{requires} \pkg{ggrepel}).
+  \item Signal transformation mode selector (\code{ratio}, \code{logfc},
+        \code{zscore}) and \code{logfc_k} steepness control.
+  \item Interactive 3D surface (\emph{requires} \pkg{plotly}), carrying
+        the same significance boundary as the 2D map.
+  \item Permutation significance test with per-iteration progress bar.
+  \item Download buttons for the landscape plot, node score table, and
+        peak/valley table (CSV).
+}
 }
 \details{
-This function launch the LEVI Graphical User Interface. The
-interface provides the same tools available in the script mode. There are
-two tools only available in the user interface: 1) Selection of area from
-heatmap to calculate the gene expression levels in the area selected;
-2) Selection of the genes in some specific area from the image.
+The GUI is a full-featured interface to \code{\link{levi}}. All file
+uploads, parameter sliders, and result downloads are handled interactively.
+For reproducible, automated, or batch analyses use \code{\link{levi}}
+directly in script mode.
+
+The app is located in \code{inst/shiny/} and can also be launched with
+\code{shiny::runApp(system.file("shiny", package = "levi"))}.
 }
 \examples{
-LEVIui(browser)
-#LEVIui(browser=TRUE)  #Launch Levi to Browser.
-#LEVIui(borwser=FALSE) #Launch Levi to R environment.
+if (interactive()) {
+    LEVIui(browser = FALSE)   # opens in RStudio Viewer
+    LEVIui(browser = TRUE)    # opens in system browser
+}
 
 }
+\seealso{
+\code{\link{levi}}, \code{\link{readExpColumn}}
+}
 \author{
-José Rafael Pilan <rafael.pilan@unesp.br> &
-Isabelle Mira da Silva (isabelle.silva@unesp.br)
+Jose Rafael Pilan \email{rafael.pilan@unesp.br},
+  Isabelle Mira da Silva
 }

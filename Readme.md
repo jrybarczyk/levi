@@ -1,3 +1,4 @@
+[![R-CMD-check](https://github.com/jrybarczyk/levi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jrybarczyk/levi/actions/workflows/R-CMD-check.yaml)
 ![](https://bioconductor.org/shields/availability/release/levi.svg)
 ![](https://bioconductor.org/shields/downloads/release/levi.svg)
 ![](https://bioconductor.org/shields/years-in-bioc/levi.svg)
@@ -5,9 +6,9 @@
 ![](https://bioconductor.org/shields/dependencies/release/levi.svg)
 
 
-# levi - Landscape Expression Visualization Interface
+# levi - Landscape Expression Visualization and Network Inference
 
-**Authors:** José R. Pilan, Isabelle M. da Silva, Agnes A. S. Takeda, Jose L. Rybarczyk-Filho
+**Authors:** José R. Pilan, Agnes A. S. Takeda, Jose L. Rybarczyk-Filho
 
 **Maintainer:** José L. Rybarczyk-Filho
 
@@ -53,8 +54,8 @@ The GUI mode is designed to make the package approachable for users who may not 
 For users experienced in R or those requiring quicker, possibly automated analyses, `levi` can be operated through scripts. This method offers greater flexibility and customization, making it suitable for integrating `levi` into broader data analysis workflows. Scripting can significantly save time, especially when dealing with large datasets or conducting batch analyses.
 
 `levi` requires two files for use: 
-- A file containing the expression levels of the genes (microarray , RNA-seq, Single Cell data). [See example](https://github.com/jrybarczyk/levi/blob/master/inst/extdata/expression.dat).
-- A file containing the biological network. [See example](https://github.com/jrybarczyk/levi/blob/master/inst/extdata/medusa.dat).
+- A file containing the expression levels of the genes (microarray , RNA-seq, Single Cell data). [See example](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/expression.dat).
+- A file containing the biological network. [See example](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/medusa.dat).
 
 ## Files
 
@@ -62,7 +63,7 @@ For users experienced in R or those requiring quicker, possibly automated analys
 
 This file should contain the genes of interest, previously normalized by the user. The expression file must have a column with gene identification (Gene Symbol, Entrez, etc.) and at least one column with gene expression levels (treatment, case, control, etc.) [see example](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/expression.dat). The user can compare expression levels between samples if there are more columns containing these data.
 
-If the expression file does not have values for all genes in the network, a message will be displayed showing a log file path to a temporary directory with gene names. In the **landscape** construction, genes with no expression value will be displayed with values close to 0.5, demonstrating that there were no changes (down-regulated or up-regulated genes).
+If the expression file does not have values for all genes in the network, a message will be displayed showing a log file path to a temporary directory with gene names. Missing measurements receive an input score of 0.5 and are recorded in `result$metadata$missing_genes`. This marks unavailable information; it does not establish absence of biological change. Smoothing also mixes neighbouring signals.
 
 Datasets of gene expression can be obtained from online databases:
 - [Gene Expression Omnibus (GEO)](https://www.ncbi.nlm.nih.gov/geo/)
@@ -73,97 +74,48 @@ Datasets of gene expression can be obtained from online databases:
 
 ### Biological Network
 
-The `levi` supports several extensions of biological network files (\*.net, \*.dyn, \*.txt, \*.dat). It is recommended to obtain interaction data/biological associations from online repositories such as the The user should build the biological network using specific tools such as Cytoscape, RedeR, Medusa, etc. It is recommended to obtain interaction data/biological associations from online repositories:
+The user builds the biological network with a tool such as Cytoscape, RedeR or
+Medusa, or passes an edge list directly with `leviFromEdges()` or a STRING
+query with `leviFromSTRING()`. Interaction data can be obtained from online
+repositories:
 - [STRING database](https://string-db.org/)
 - [STITCH database](http://stitch.embl.de/)
 - [StarBase](http://starbase.sysu.edu.cn/)
-- [miRBase](http://www.mirbase.org/)
+- [miRBase](https://mirbase.org/)
 - [lncRNAdb](http://www.lncrnadb.org/)
-- [HTRIdb](http://www.lbbc.ibb.unesp.br/htri)
 
+Supported file formats (`fileTypeInput`):
 
-| Extension | File Type | Link |
-|-----------|-----------|-----|
-| dat       | Medusa (DAT) | [Example DAT](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/medusa.dat) |
-| dyn       | RedeR (DYN)  | [Example DYN](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/RedeR.dyn) |
-| net       | Pajek (NET)  | [Example NET](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/Pajek.net) |
-| stg       | STRING / STITCH | [Example coordinates](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/string_network_coordinates.txt) |
-| stg       | STRING / STITCH | [Example interactions](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/string_interactions.tsv)|
-
+| Code | File type |
+|------|-----------|
+| dat  | Medusa (DAT), [example](https://github.com/jrybarczyk/levi/blob/devel/inst/extdata/medusa.dat) |
+| dyn  | RedeR (DYN) |
+| net  | Pajek (NET) |
+| stg  | STRING / STITCH (coordinates file plus interactions file) |
 
 
 ## Viewing Modes
 
 ### Graphical User Interface (GUI)
 
-levi is developed with a Graphical User Interface (GUI) leveraging the Shiny package, enabling it to be launched both within the RStudio environment and the user's default web browser. Choosing Shiny for the GUI aims to provide a highly interactive experience, where users can intuitively manipulate data and visual settings. This makes the analysis of gene expression in biological networks accessible even to those who may not be familiar with programming in R, facilitating data exploration and interpretation in a visual manner.
-
-Furthermore, the core analysis of levi is implemented in Rcpp (C++), a strategic decision to take advantage of the efficiency and performance this language offers. This hybrid approach ensures that while the Shiny-based GUI manages user interaction in a fluid and responsive manner, heavy data processing is optimally executed in the backend in Rcpp. This results in a powerful tool that combines ease of use with the capability to perform complex and computationally intensive analyses.
-
-Every element of the GUI, from data loading to selecting parameters for analysis and visualization adjustments, has been meticulously designed to support users in conducting their analyses without needing deep programming knowledge. Simultaneously, the integration of the C++ analysis core through appropriate interfaces with the R environment allows levi to carry out advanced calculations effectively, maintaining the interactivity and accessibility provided by the Shiny interface.
-
-
+The GUI is built with Shiny and can be launched inside RStudio or in the
+default web browser. The heavy computation runs in C++ through Rcpp, so the
+interface stays responsive while the landscape is built.
 
 ```r
 library(levi)
 LEVIui(browser=TRUE)  # Launch Levi to Browser.
 LEVIui(browser=FALSE) # Launch Levi to R environment.
 ```
-<center><img src="https://github.com/jrybarczyk/levi/blob/master/vignettes/levi.png" width=150%></center>
-<center> <b>Figure 2: </b> Graphical User Interface (GUI).</center>
 
-* **1** - **Tabs**
-    + **File** - General options for uploading the data files.
-    + **Settings** - Options to build the **landscape**. 
-* **2** - **Network input type:** - Selection of the biological network input 
-format. The options are available on the table 1.
-* **3** - **Upload the network file** - Input button to select the biological 
-network file.
-* **4** - **Upload the expression file** - Input button to select the gene 
-expression levels file.
-* **5** - **Expression values in log scale** - 
-select when there is low variation between expression data
-* **6** - **Selected fields** - Selecting the type of analysis. Comparison 
-between two samples or a single sample.
-* **7** - **Select gene symbol field** -  Selection of the gene ID contained 
-in the gene expression levels file.  The gene ID in the biological network 
-file must be the same in the gene expression levels file. **Select test field**
--  Select the case/test sample. **Select control field** - Select the 
-control sample. If **levi** detects the case/test sample and control sample as
-equal, then **levi** will apply the "single sample" analysis.
-* **8** - **Chart Colors** - Color palette to build the **landscape**. There is 
-two options the **Multicolor** has 20 color levels combined. The 
-**Two colors** has two categories of color palettes, multicolor and two colors. 
-For the selection of two colors the available options are: *purple_pink*, 
-*green_blue*, *blue_yellow*, *pink_green*, *orange_purple*, *green_marine*. 
-Both of them is targeted to show the biological network with higher expression. 
-(Figure 3 and Figure 4).
-* **9** - **Chart with contour** - Enable or disable the contour lines in 
-the **landscape**.
-* **10** -  **landscape** Image display area. The user can select specific 
-areas of the image to inspect the gene name and position.
-* **11** - **Expression area:** - Total expression value of the selected 
-area in the image.
-* **12** - **Download options**
-    + **File format to landscape** - Select the output format of the
-    **landscape**. The options available are: TIFF, BMP,  JPEG and PNG. We 
-    recommend using this option in the browser.
-    + **Download Plot** - Button to save the file.
-* **13** -  Visualization of gene name and expression value of the selected 
-area in the **landscape**. The user can save the table in a csv file 
-(button **Download Data**)
-* **14** - **Settings**
-    + **Contrast** - Constrast value in the **landscape**. The variable 
-    range is 1 to 100. The default value is 50.
-    + **Resolution** -  Image  size of the **landscape**. The variable 
-    range is 1 to 100. The default value is 50. If this parameter is higher, 
-    then the total time required will be longer.
-    + **Smoothing** - Smoothing of the **landscape**. The variable range 
-    is 1 to 100. The default value is 50.I f this parameter is higher, then 
-    the total time required will be longer.
-    + **Zoom** - Zoom value for the **landscape**. The variable range is 
-    1 to 100. The default value is 50.
-    
+The **File** tab loads the network and expression files and selects the gene
+identifier, test and control columns. The **Settings** tab controls contrast,
+resolution, smoothing, zoom, the colour palette (multicolor or one of the
+two-colour sets), contour lines, the signal mode and the permutation test,
+which outlines and labels the significant regions as in script mode. The
+landscape, its 3D surface and the tables of regions and selected genes can be
+downloaded. A full walkthrough is in `vignette("levi")`.
+
 ### Script
 
 The script mode offers enhanced flexibility for more detailed settings adjustments and comprehensive automation. This mode is particularly well-suited for advanced users who require precise control over their analysis parameters and workflows. Additionally, it is ideal for processing large datasets in bulk, enabling efficient data handling and analysis customization. This capability makes it an invaluable tool for researchers and data scientists looking to streamline their data analysis pipelines, ensuring both scalability and reproducibility in their work.
@@ -180,7 +132,7 @@ template_expression <- file.path(system.file(package="levi"),
 
 multicolor <- levi(networkCoordinatesInput = template_network,
                 expressionInput = template_expression, fileTypeInput = "dat",
-                geneSymbolnput = "ID", 
+                geneSymbolInput = "ID", 
                 readExpColumn=
                 readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"), 
                 contrastValueInput = 50, resolutionValueInput  = 50, 
@@ -188,7 +140,7 @@ multicolor <- levi(networkCoordinatesInput = template_network,
 
 twocolors <- levi(networkCoordinatesInput = template_network,
                 expressionInput = template_expression, fileTypeInput = "dat",
-                geneSymbolnput = "ID", 
+                geneSymbolInput = "ID", 
                 readExpColumn=
                 readExpColumn("TumorCurrentSmoker-NormalNeverSmoker"),
                 setcolor = "pink_green", contourLevi = FALSE)
@@ -203,7 +155,7 @@ and to add more combinations separate by comma (,).
 ```r
 library(levi)
 base <- readExpColumn("TumorFormerSmoker-NormalFormerSmoker", 
-                        "TumorNeverSmoker-TumorNeverSmoker")
+                        "TumorNeverSmoker-NormalNeverSmoker")
 
 template_network <- file.path(system.file(package="levi"),"extdata",
                                 "medusa.dat", fsep = .Platform$file.sep)
@@ -215,21 +167,49 @@ template_expression <- file.path(system.file(package="levi"),
 multicolor <- levi(networkCoordinatesInput = template_network,
                     expressionInput = template_expression, 
                     fileTypeInput = "dat",
-                    geneSymbolnput = "ID", readExpColumn= base, 
+                    geneSymbolInput = "ID", readExpColumn= base, 
                     contrastValueInput = 50, resolutionValueInput  = 50, 
                     zoomValueInput = 50, smoothValueInput = 50, 
                     contourLevi = FALSE)
 
 twocolors <- levi(networkCoordinatesInput = template_network,
                 expressionInput = template_expression, fileTypeInput = "dat",
-                geneSymbolnput = "ID", 
+                geneSymbolInput = "ID", 
                 readExpColumn= base,
                 setcolor = "pink_green", contourLevi = FALSE)
 
 ```
-`levi` offers a versatile solution for gene expression and biological network analysis, catering to a wide range of user preferences and technical expertise levels.
-[more examples](https://github.com/jrybarczyk/levi/blob/paper/Case/Case.pdf)
+More examples are in `vignette("levi")`, `vignette("levi_inference")`,
+`vignette("levi_validation")` and the scripts in `inst/scripts/`.
 
-## Information about downloads of levi on Bioconductor.org
-![](https://github.com/jrybarczyk/levi/blob/paper/miscellaneous/Rplot.png)
 
+## Signal contracts and reproducibility
+
+Signal interpretation: `ratio` preserves Test/(Test + Control), with no min-max
+rescaling; equal nonzero inputs give 0.5. `expressionLog = TRUE` back-transforms
+log2 inputs only in this mode. A single ratio column means abundance/(abundance + 1),
+not a comparison with a control. `logfc` accepts two log-scale columns or one
+already computed logFC, mapping zero to 0.5. `zscore` centres on the mean logFC
+of measured network support points, not on biological absence of change.
+Missing measurements are assigned 0.5 and listed in `result$metadata`.
+Gaussian smoothing mixes neighbouring signals, so these baseline statements
+apply to the input signals and to uniformly neutral networks.
+
+Permutation inference is conditional on the fixed network and layout. Measured
+gene values are shuffled as pairs and edge midpoints are recalculated; missing
+positions stay fixed. Both tails over occupied cells form one multiple-testing
+family per comparison. `p_adjust_method = "BY"` is the default; contours and
+`result$pvalues` use adjusted values. `result$raw_pvalues` retains the unadjusted
+values. `perm_side` selects the displayed tails, without changing that family.
+This is not a test of differential expression between biological replicates;
+increasing `n_perm` alone does not validate inferential use. Calibration across
+networks, layouts and missingness patterns still requires simulation studies.
+
+Call `set.seed()` before permutation runs. `result$metadata` records the RNG
+state, network, coordinates, signal mode, grid settings and software versions.
+`leviDiff()` rejects incompatible metadata or grid coordinates. For DESeq2,
+edgeR and limma adapters, select the logFC column against itself with
+`signal_mode = "logfc"`; abundance annotations are not control measurements.
+For edgeR, select the contrast in `glmLRT()` or `glmQLFTest()` before calling
+`leviFromEdgeR()` on the resulting test object. KEGG uses the supplied universe,
+converting both selected genes and background to ENTREZID with the same OrgDb.

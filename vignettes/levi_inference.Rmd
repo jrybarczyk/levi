@@ -1,0 +1,264 @@
+---
+title: "levi: Which null answers which question"
+author:
+  - name: José Luiz Rybarczyk Filho
+    affiliation: São Paulo State University (UNESP)
+    email: jose.luiz@unesp.br
+date: "`r Sys.Date()`"
+bibliography: bibliography.bib
+link-citations: true
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+vignette: >
+  %\VignetteIndexEntry{levi: Which null answers which question}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    collapse  = TRUE,
+    comment   = "#>",
+    fig.align = "center",
+    fig.width = 6,
+    fig.height = 5,
+    message   = FALSE
+)
+library(levi)
+```
+
+# Three nulls, three questions
+
+Every inferential function in levi is a permutation test. What separates them
+is not the statistic but *what is shuffled*, because that decides which
+hypothesis is being tested. Before reading a p-value from levi, decide which of
+these three questions you are asking.
+
+| What is shuffled | Question answered | Functions |
+|:--|:--|:--|
+| **Node labels**: expression values change places on a fixed network and layout | Is expression spatially organised on *this* network, beyond what any arrangement of the same values would give? | `levi(n_perm > 0)`, `leviGraphMoran()`, `leviGraphGetisOrd()`, `leviGraphSpectrum()`, `leviGraphWeightedTopology()` |
+| **Sample labels**: condition labels change places across biological replicates | Does the condition change expression in this region of the network, in a way that replicates? | `leviReplicateInference()`, `leviGraphClusterInference()`, `leviGraphTFCEInference()`, `leviGraphTFCEFreedmanLane()`, `leviBulkGraphInference()`, the `leviSingleCell*` family |
+| **Edges**: the network is rewired keeping every node's degree | Does the clustering depend on the specific wiring, or would any network with these degrees show it? | `leviGraphRewiringInference()`, `leviGraphTFCERewiring()` |
+
+The three are not interchangeable. A node-label test can be highly significant
+for a single unreplicated sample, because it says nothing about replication.
+A sample-label test with three replicates per group can never reach
+p < 0.05, because only 20 label arrangements exist. A rewiring test keeps the
+expression values fixed and asks a purely topological question.
+
+The examples below use the bundled hub network (one hub, eight satellites) and
+small simulated data so that the vignette builds quickly. Increase `n_perm`
+in real analyses.
+
+```{r data}
+hub_net <- system.file("extdata", "hub_network.dat", package = "levi")
+genes   <- c("HUB", paste0("N", 1:8))
+
+# Four control and four treated replicates on a log2 scale. The hub and its
+# first two neighbours respond to treatment; the rest do not.
+set.seed(2026)
+expression <- matrix(rnorm(9 * 8, mean = 6, sd = 0.3), 9, 8,
+                     dimnames = list(genes, paste0("s", 1:8)))
+groups <- rep(c("control", "treated"), each = 4)
+expression[c("HUB", "N1", "N2"), groups == "treated"] <-
+    expression[c("HUB", "N1", "N2"), groups == "treated"] + 1.5
+```
+
+# Node-label null: the landscape test
+
+`levi()` with `n_perm > 0` shuffles the measured node values, recalculates the
+edge signals and rebuilds the landscape in every permutation. The layout never
+moves. By default (`inference_unit = "region"`) the eight-connected regions
+beyond the neutral score are redetected in each permutation, and every
+observed region is compared with the *largest* regional mass seen under the
+null, over both directions. Taking the maximum controls the search across all
+regions without a further adjustment [@Westfall1993; @Nichols2002].
+
+```{r landscape, fig.height=5}
+lfc <- rowMeans(expression[, groups == "treated"]) -
+       rowMeans(expression[, groups == "control"])
+
+set.seed(1)
+res <- levi(
+    expressionInput         = data.frame(ID = genes, logFC = lfc),
+    networkCoordinatesInput = hub_net,
+    fileTypeInput           = "dat",
+    geneSymbolInput         = "ID",
+    readExpColumn           = readExpColumn("logFC-logFC"),
+    signal_mode             = "logfc",
+    resolutionValueInput    = 20,
+    smoothValueInput        = 30,
+    n_perm                  = 199)
+
+res$regions$summary[, c("Region", "Direction", "Cells", "Mass",
+                        "PSpatial", "Significant")]
+```
+
+`PSpatial` says how often a random placement of the same nine values produced
+a region at least as massive anywhere on the landscape. It is conditional on
+the network and on the layout: a different drawing of the same graph is a
+different experiment. It does *not* say the treatment effect replicates,
+because the permutation never touched the samples.
+
+`leviRegionGenes()` ranks the nodes that support each region, as an
+interpretation aid rather than a gene-level test:
+
+```{r region-genes}
+head(leviRegionGenes(res, top_n = 3))
+```
+
+## The legacy cell mode
+
+`inference_unit = "cell"` tests every occupied grid cell and adjusts the two
+directional families jointly with `p_adjust_method` ("BY" by default).
+Neighbouring cells are almost perfectly correlated, so this adjustment is very
+conservative. The mode is kept because the graphical interface draws its
+contours from it and for comparison with earlier versions; the regional test
+is the recommended default.
+
+# Sample-label null: biological replication
+
+When replicates exist, permute *them*. `leviReplicateInference()` recomputes
+the gene-level log fold-change, rebuilds the landscape and redetects regions
+for every arrangement of the condition labels. The regions are the same
+objects as above, but the p-value now answers the replication question.
+
+```{r replicate, fig.height=5}
+set.seed(1)
+rep_res <- leviReplicateInference(
+    expression, groups, test = "treated", control = "control",
+    networkCoordinatesInput = hub_net, fileTypeInput = "dat",
+    resolutionValueInput = 20, smoothValueInput = 30)
+
+rep_res$regions$summary[, c("Region", "Direction", "Mass", "PSpatial",
+                            "Significant")]
+rep_res$metadata$possible_permutations
+```
+
+With four replicates per group there are `choose(8, 4) = 70` distinct label
+arrangements, so the test enumerated all of them (`permutation_exact` is
+`TRUE`) and the smallest attainable p-value is 1/70.
+
+The same null drives the graph-native tests, which do not need a layout at
+all. `leviGraphTFCEInference()` fits a limma moderated t per gene [@Smyth2004]
+and integrates it over thresholds with threshold-free cluster enhancement
+[@Smith2009], using network components as clusters:
+
+```{r tfce}
+tfce <- leviGraphTFCEInference(
+    expression, groups, hub_net, test = "treated", control = "control")
+tfce$statistic[order(tfce$statistic$PGlobal), ][1:4, ]
+```
+
+`PGlobal` compares each gene's TFCE score with the maximum over all genes and
+both directions in every permutation, which controls the family-wise error
+rate across the network.
+
+## Paired designs and covariates
+
+Pass `blocks` (donor, batch, litter) to permute labels only within blocks;
+the block also enters the linear model as a fixed effect. When nuisance
+covariates are continuous or numerous, `leviGraphTFCEFreedmanLane()` permutes
+the residuals of the nuisance-only model instead of the labels
+[@Freedman1983; @Winkler2014]. The single-cell functions aggregate cells into
+donor pseudobulks and permute the donors, jointly across cell types, so that
+cells are never treated as replicates [@Squair2021].
+
+# How small a design can be
+
+A permutation p-value cannot fall below 1 / (number of arrangements). When
+that floor is above the significance level, nothing in the data can rescue
+the test, and levi now says so with a warning. The table gives the floor for
+common designs:
+
+| Design | Arrangements | Smallest p |
+|:--|--:|--:|
+| 3 vs 3, unblocked | 20 | 0.050 |
+| 4 vs 4, unblocked | 70 | 0.014 |
+| 4 donors, paired (within-donor swaps) | 16 | 0.063 |
+| 5 donors, paired | 32 | 0.031 |
+| 6 donors, paired | 64 | 0.016 |
+
+Node-label tests do not have this problem, because the number of ways to
+arrange gene values across a network is astronomically large. That is exactly
+why their p-values must not be read as evidence of replication.
+
+# Edge null: is it the wiring?
+
+The rewiring tests keep the gene scores fixed and generate networks with the
+same degree sequence by degree-preserving edge swaps [@Maslov2002]. They ask whether the observed clustering needs the
+specific wiring or merely the hubs' degrees.
+
+```{r rewiring}
+scores <- setNames(tfce$statistic[["T"]], tfce$statistic$Gene)
+set.seed(1)
+rew <- leviGraphRewiringInference(scores, hub_net, threshold = 1.5,
+                                  n_perm = 199)
+rew$regions$summary[, c("Region", "Direction", "Nodes", "Mass", "PSpatial")]
+```
+
+On a star network every rewiring that preserves degrees returns the same
+graph, so this test is uninformative here by construction. On real
+interactomes, where many graphs share a degree sequence, it separates
+"the responding genes are hubs" from "the responding genes are wired
+together".
+
+# Autocorrelation on the graph
+
+`leviGraphMoran()` and `leviGraphGetisOrd()` are the graph analogues of the
+spatial statistics used in geography, Moran's I [@Moran1950] and Getis-Ord
+G [@Getis1992]. Both use the node-label null. The local tables carry a
+Benjamini-Hochberg adjustment across nodes [@Benjamini1995], and the Getis-Ord
+`Significant` flag uses the two-sided adjusted p-value.
+
+```{r moran}
+set.seed(1)
+moran <- leviGraphMoran(scores, hub_net, n_perm = 199)
+moran$global
+head(leviGraphGetisOrd(scores, hub_net, n_perm = 199, seed = 1)[,
+    c("Gene", "GiStar", "PTwoSided", "PAdjusted", "Class")])
+```
+
+# Running in parallel
+
+Every permutation function accepts `BPPARAM`. The default `SerialParam()` runs
+the null in the calling process; `BiocParallel::MulticoreParam()` or
+`SnowParam()` spread it over workers. All randomness is drawn before the
+workers start, so the result is identical for any back-end given the same
+seed.
+
+```{r parallel, eval=FALSE}
+library(BiocParallel)
+tfce_par <- leviGraphTFCEInference(
+    expression, groups, hub_net, test = "treated", control = "control",
+    n_perm = 999, BPPARAM = MulticoreParam(4))
+```
+
+# Reporting checklist
+
+1. Name the null: node labels, sample labels or edges.
+2. Report the number of permutations and whether the enumeration was exact
+   (`exact`, `possible_permutations`).
+3. For landscape tests, report the network source, the layout algorithm and
+   seed, resolution and smoothing. A different layout is a different test.
+4. For sample-label tests, report the blocking structure and the design's
+   p-value floor.
+5. Treat node-label significance as a statement about spatial organisation,
+   never as evidence that an effect replicates.
+6. Whenever replicates exist, report a sample-label test next to the
+   landscape: `leviReplicateInference()` for the same regions and
+   `leviGraphTFCEInference()` as the layout-free confirmation. A network in
+   which most genes respond gives a node-label p-value near 1 by
+   construction, while both sample-label tests remain informative.
+
+# Session information
+
+```{r session}
+sessionInfo()
+```
+
+# References

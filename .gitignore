@@ -1,0 +1,13 @@
+src/*.o
+src/*.so
+src/*.dll
+/*.png
+/*.Rcheck
+/*.BiocCheck
+/*.tar.gz
+.Rproj.user
+.Rhistory
+.RData
+Rplots.pdf
+tests/testthat/_problems/
+tests/testthat/testthat-problems.rds

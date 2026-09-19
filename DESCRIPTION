@@ -1,7 +1,7 @@
 Package: levi
 Type: Package
-Title: Landscape Expression Visualization Interface
-Version: 1.20.0
+Title: Landscape Expression Visualization and Network Inference
+Version: 1.99.0
 Authors@R:
     c(person(given = "Rafael",
                  family = "Pilan",
@@ -19,38 +19,72 @@ Authors@R:
                 email = "jose.luiz@unesp.br",
                 comment = c(ORCID = "0000-0002-0757-3608"))
 			 )
-Description: levi is an open-source R package designed to enhance the visualization of gene expression data integrated with biological networks. It provides an interactive graphical user interface (GUI) for users to upload and manipulate data, offering intuitive control over visualization settings. Additionally, levi supports script-based usage for advanced users requiring automation and detailed customization. The package displays a heatmap with surface curves, highlighting regions of altered gene expression. It supports multiple file formats for both gene expression data and biological networks, making it a versatile tool for transcriptomic analysis and network biology.
+Description: Projects gene expression onto the plane of a biological
+    network and draws it as a landscape: a Gaussian-kernel weighted surface
+    on an absolute scale where 0.5 means no change. Regions of the landscape
+    are tested by permutation, either conditional on the network and layout
+    (node-label shuffling, maximum regional mass) or against biological
+    replication (sample-label permutation, with blocking). Graph-native tests
+    complement the landscape: threshold-free cluster enhancement on network
+    components, Moran and Getis-Ord autocorrelation, Laplacian smoothness,
+    Freedman-Lane residual permutation with covariates and degree-preserving
+    rewiring nulls. Pseudobulk workflows for single-cell RNA-seq permute
+    donors rather than cells. Adapters read DESeq2, edgeR, limma and Seurat
+    results, SummarizedExperiment objects and STRING networks. A Shiny
+    interface covers the interactive visualization.
 URL: https://bioconductor.org/packages/levi
 BugReports: https://github.com/jrybarczyk/levi/issues
 Encoding: UTF-8
 LazyData: false
-RoxygenNote: 7.0.1
-Imports: 
-    DT(>= 0.4), 
-    RColorBrewer(>= 1.1-2), 
-    colorspace(>= 1.3-2), 
-    dplyr(>= 0.7.4), 
-    ggplot2(>= 2.2.1), 
-    httr(>= 1.3.1), 
-    igraph(>= 1.2.1), 
-    reshape2(>= 1.4.3), 
-    shiny(>= 1.0.5), 
-    shinydashboard(>= 0.7.0), 
-    shinyjs(>= 1.0), 
-    xml2(>= 1.2.0),
-    Rcpp (>= 0.12.18),
-    knitr, 
-    rmarkdown,  
-    grid, 
-    grDevices, 
-    stats, 
-    utils, 
-    testthat, 
+Imports:
+    BiocParallel,
+    Matrix,
+    dplyr (>= 0.7.4),
+    ggplot2 (>= 2.2.1),
+    grid,
+    grDevices,
+    igraph (>= 1.2.1),
     methods,
-    BiocStyle
+    Rcpp (>= 0.12.18),
+    reshape2 (>= 1.4.3),
+    shiny (>= 1.0.5),
+    stats,
+    SummarizedExperiment,
+    utils,
+    withr,
+    xml2 (>= 1.2.0)
+Suggests:
+    testthat,
+    BiocStyle,
+    knitr,
+    rmarkdown,
+    DT (>= 0.4),
+    shinydashboard (>= 0.7.0),
+    shinyjs (>= 1.0),
+    plotly (>= 4.9.0),
+    ggrepel,
+    patchwork,
+    cowplot,
+    gridExtra,
+    htmlwidgets,
+    magick,
+    reticulate,
+    Biobase,
+    DESeq2,
+    edgeR,
+    limma,
+    Seurat,
+    SingleCellExperiment,
+    S4Vectors,
+    clusterProfiler,
+    org.Hs.eg.db,
+    STRINGdb
 LinkingTo: Rcpp
 License: GPL (>= 2)
-biocViews: GeneExpression, Microarray, Normalization, Sequencing, Network, Software
+biocViews: GeneExpression, Microarray, Sequencing, RNASeq,
+    Network, GraphAndNetwork, StatisticalMethod, Software, Visualization,
+    GUI, GeneSetEnrichment, DifferentialExpression, SingleCell, Proteomics
 VignetteBuilder: knitr
 LazyLoad: yes
 NeedsCompilation: yes
+Config/roxygen2/version: 8.1.0
