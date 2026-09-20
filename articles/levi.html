@@ -412,7 +412,7 @@ or the permutation test is being computed.</p>
 <span>    smoothValueInput       <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>    contourLevi            <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmprLVkEp/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
+<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmpFp7ZSj/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
 <p><img src="levi_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="576"></p>
 <p>The example dataset contains lung adenocarcinoma microarray data
 <span class="citation">(Landi et al. 2008)</span> comparing tumor tissue
@@ -443,9 +443,9 @@ to be processed in a single call:</p>
 <span>    setcolor                <span class="op">=</span> <span class="st">"pink_green"</span>,</span>
 <span>    contourLevi             <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmprLVkEp/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
+<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmpFp7ZSj/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
 <p><img src="levi_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="576"></p>
-<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmprLVkEp/TumorFormerSmoker-NormalFormerSmoker/levi.log</span></span></code></pre>
+<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmpFp7ZSj/TumorFormerSmoker-NormalFormerSmoker/levi.log</span></span></code></pre>
 <p><img src="levi_files/figure-html/unnamed-chunk-4-2.png" class="r-plt" alt="" width="576"></p>
 </div>
 <div class="section level4">
@@ -866,7 +866,7 @@ be read with the node’s degree in mind.</p>
 <span>    zoomValueInput          <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>    smoothValueInput        <span class="op">=</span> <span class="fl">5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmprLVkEp/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
+<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmpFp7ZSj/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
 <p><img src="levi_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="576"></p>
 <div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Top 10 most altered genes in the network</span></span>
@@ -933,7 +933,7 @@ explains which null answers which question.</p>
 <span>    sig_level <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>    perm_side <span class="op">=</span> <span class="st">"both"</span>   <span class="co"># "over", "under", or "both" (default)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmprLVkEp/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
+<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmpFp7ZSj/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
 <pre><code><span><span class="co">## Permutation test: 100 iterations for 'TumorCurrentSmoker-NormalNeverSmoker'...</span></span></code></pre>
 <p><img src="levi_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="576"></p>
 <div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
@@ -1059,7 +1059,7 @@ smallest attainable p-value is 1/70.</p>
 <span>    seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">tfce</span><span class="op">$</span><span class="va">statistic</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">tfce</span><span class="op">$</span><span class="va">statistic</span><span class="op">$</span><span class="va">PGlobal</span><span class="op">)</span>, <span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">##     Gene        T        TFCE      POver PUnder    PGlobal GlobalSignificant</span></span>
-<span><span class="co">## HUB  HUB 8.219189 264.0536523 0.01428571      1 0.01428571              TRUE</span></span>
+<span><span class="co">## HUB  HUB 8.219189 264.0536523 0.01428571      1 0.02857143              TRUE</span></span>
 <span><span class="co">## N1    N1 6.796803 180.1085001 0.01428571      1 0.02857143              TRUE</span></span>
 <span><span class="co">## N2    N2 6.741273 180.1085001 0.01428571      1 0.02857143              TRUE</span></span>
 <span><span class="co">## N4    N4 1.009317   0.7337502 0.58571429      1 0.80000000             FALSE</span></span></code></pre>

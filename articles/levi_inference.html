@@ -289,7 +289,7 @@ thresholds with threshold-free cluster enhancement <span class="citation">(<a hr
 <span>    <span class="va">expression</span>, <span class="va">groups</span>, <span class="va">hub_net</span>, test <span class="op">=</span> <span class="st">"treated"</span>, control <span class="op">=</span> <span class="st">"control"</span><span class="op">)</span></span>
 <span><span class="va">tfce</span><span class="op">$</span><span class="va">statistic</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">tfce</span><span class="op">$</span><span class="va">statistic</span><span class="op">$</span><span class="va">PGlobal</span><span class="op">)</span>, <span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="op">]</span></span>
 <span><span class="co">#&gt;     Gene        T        TFCE      POver PUnder    PGlobal GlobalSignificant</span></span>
-<span><span class="co">#&gt; HUB  HUB 8.219189 264.0536523 0.01428571      1 0.01428571              TRUE</span></span>
+<span><span class="co">#&gt; HUB  HUB 8.219189 264.0536523 0.01428571      1 0.02857143              TRUE</span></span>
 <span><span class="co">#&gt; N1    N1 6.796803 180.1085001 0.01428571      1 0.02857143              TRUE</span></span>
 <span><span class="co">#&gt; N2    N2 6.741273 180.1085001 0.01428571      1 0.02857143              TRUE</span></span>
 <span><span class="co">#&gt; N4    N4 1.009317   0.7337502 0.58571429      1 0.80000000             FALSE</span></span></code></pre></div>
@@ -393,7 +393,7 @@ p-value.</p>
 <span><span class="va">moran</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviGraphMoran.html">leviGraphMoran</a></span><span class="op">(</span><span class="va">scores</span>, <span class="va">hub_net</span>, n_perm <span class="op">=</span> <span class="fl">199</span><span class="op">)</span></span>
 <span><span class="va">moran</span><span class="op">$</span><span class="va">global</span></span>
 <span><span class="co">#&gt;       MoranI    P</span></span>
-<span><span class="co">#&gt; 1 -0.3378031 0.07</span></span>
+<span><span class="co">#&gt; 1 -0.3378031 0.05</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/leviGraphGetisOrd.html">leviGraphGetisOrd</a></span><span class="op">(</span><span class="va">scores</span>, <span class="va">hub_net</span>, n_perm <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">[</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene"</span>, <span class="st">"GiStar"</span>, <span class="st">"PTwoSided"</span>, <span class="st">"PAdjusted"</span>, <span class="st">"Class"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Gene    GiStar PTwoSided PAdjusted   Class</span></span>
