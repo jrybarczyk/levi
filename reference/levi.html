@@ -19,7 +19,7 @@ processing"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">levi</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.20.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.99.0</span>
       </span>
     </div>
 
@@ -30,6 +30,22 @@ processing"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu"><li>
+      <a href="../articles/levi_guide.html">levi: A Complete User Guide</a>
+    </li>
+    <li>
+      <a href="../articles/levi_inference.html">levi: Which null answers which question</a>
+    </li>
+    <li>
+      <a href="../articles/levi_validation.html">levi: Calibration and a real dataset</a>
+    </li>
+  </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/jrybarczyk/levi/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
@@ -57,10 +73,35 @@ processing</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">levi</span><span class="op">(</span><span class="va">expressionInput</span>, <span class="va">fileTypeInput</span>, <span class="va">networkCoordinatesInput</span>,</span>
-<span><span class="va">networkInteractionsInput</span>, <span class="va">geneSymbolnput</span>, <span class="va">readExpColumn</span>,</span>
-<span><span class="va">contrastValueInput</span>, <span class="va">zoomValueInput</span>, <span class="va">resolutionValueInput</span>,</span>
-<span><span class="va">smoothValueInput</span>, <span class="va">expressionLog</span>, <span class="va">contourLevi</span>, <span class="va">setcolor</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">levi</span><span class="op">(</span></span>
+<span>  <span class="va">expressionInput</span>,</span>
+<span>  <span class="va">fileTypeInput</span>,</span>
+<span>  <span class="va">networkCoordinatesInput</span>,</span>
+<span>  networkInteractionsInput <span class="op">=</span> <span class="cn">NA</span>,</span>
+<span>  <span class="va">geneSymbolInput</span>,</span>
+<span>  <span class="va">readExpColumn</span>,</span>
+<span>  contrastValueInput <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>  zoomValueInput <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>  resolutionValueInput <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>  smoothValueInput <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>  expressionLog <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  contourLevi <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  setcolor <span class="op">=</span> <span class="st">"default"</span>,</span>
+<span>  plot3d <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  n_perm <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  sig_level <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  perm_side <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"both"</span>, <span class="st">"over"</span>, <span class="st">"under"</span><span class="op">)</span>,</span>
+<span>  signal_mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ratio"</span>, <span class="st">"logfc"</span>, <span class="st">"zscore"</span><span class="op">)</span>,</span>
+<span>  logfc_k <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  p_adjust_method <span class="op">=</span> <span class="st">"BY"</span>,</span>
+<span>  region_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  region_min_cells <span class="op">=</span> <span class="fl">3L</span>,</span>
+<span>  inference_unit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"region"</span>, <span class="st">"cell"</span><span class="op">)</span>,</span>
+<span>  perm_strata <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  edge_weighting <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"midpoint"</span>, <span class="st">"degree"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  .parsed_network <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  .draw <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -68,20 +109,26 @@ processing</p>
 
 
 <dl><dt id="arg-expressioninput">expressionInput<a class="anchor" aria-label="anchor" href="#arg-expressioninput"></a></dt>
-<dd><p>Filename of gene expression data, which is a
-numeric data.frame or matrix. The rows represent genes/proteins and the
-columns represent the experiment (RNA-seq, microarray, etc).</p></dd>
+<dd><p>File path to gene expression data (tab-delimited),
+OR a <code>data.frame</code> / <code>matrix</code> directly. When passing a
+<code>data.frame</code>, it must contain a gene identifier column and at least
+one expression column. Objects from <code><a href="leviFromDESeq2.html">leviFromDESeq2()</a></code>,
+<code><a href="leviFromEdgeR.html">leviFromEdgeR()</a></code>, <code><a href="leviFromLimma.html">leviFromLimma()</a></code>, and
+<code><a href="leviFromSeurat.html">leviFromSeurat()</a></code> are accepted directly.</p></dd>
 
 
 <dt id="arg-filetypeinput">fileTypeInput<a class="anchor" aria-label="anchor" href="#arg-filetypeinput"></a></dt>
-<dd><p>Filename of biological network. Levi can read files
-written in the following formats: Medusa (DAT), RedeR (DYN), Pajek (NET)
-and STRING/STITCH</p></dd>
+<dd><p>Format of the biological network, given as one of
+<code>"dat"</code> (Medusa), <code>"dyn"</code> (RedeR), <code>"net"</code> (Pajek) or
+<code>"stg"</code> (STRING/STITCH). This is the format code, not a file name:
+the network itself is passed in <code>networkCoordinatesInput</code>.</p></dd>
 
 
 <dt id="arg-networkcoordinatesinput">networkCoordinatesInput<a class="anchor" aria-label="anchor" href="#arg-networkcoordinatesinput"></a></dt>
-<dd><p>It allows the user to load the coordinate
-of the nodes the network.</p></dd>
+<dd><p>File path to the biological network
+carrying the node coordinates, OR a <code>data.frame</code> with them directly
+(as returned in <code>$nodes</code> by <code><a href="leviFromSTRING.html">leviFromSTRING()</a></code>). The format
+must match <code>fileTypeInput</code>.</p></dd>
 
 
 <dt id="arg-networkinteractionsinput">networkInteractionsInput<a class="anchor" aria-label="anchor" href="#arg-networkinteractionsinput"></a></dt>
@@ -90,7 +137,7 @@ STRING/STITCH data format.
 It allows the user to load the interaction data file of the network.</p></dd>
 
 
-<dt id="arg-genesymbolnput">geneSymbolnput<a class="anchor" aria-label="anchor" href="#arg-genesymbolnput"></a></dt>
+<dt id="arg-genesymbolinput">geneSymbolInput<a class="anchor" aria-label="anchor" href="#arg-genesymbolinput"></a></dt>
 <dd><p>Column name from gene expression data containing the
 identifier (gene Symbol, Entrez ID, EMSEMBL, etc).</p></dd>
 
@@ -101,13 +148,20 @@ comparisons of the experiments</p></dd>
 
 
 <dt id="arg-contrastvalueinput">contrastValueInput<a class="anchor" aria-label="anchor" href="#arg-contrastvalueinput"></a></dt>
-<dd><p>Numeric value for image contrast. The variable
-range is 0 to 100. The default value is 50</p></dd>
+<dd><p>Numeric value controlling how tightly the
+landscape hugs the network. The landscape is built by normalised
+convolution, and this parameter sets the occupancy threshold below which a
+grid cell is considered background and returned as <code>NA</code>: higher values
+give a tighter silhouette. The variable range is 0 to 100. The default
+value is 50.</p></dd>
 
 
 <dt id="arg-zoomvalueinput">zoomValueInput<a class="anchor" aria-label="anchor" href="#arg-zoomvalueinput"></a></dt>
-<dd><p>Numeric value for image zoom. The variable range is 0
-to 100. The default value is 50.</p></dd>
+<dd><p>Numeric value for image zoom, from 0 (widest frame)
+to 100 (tightest). The grid always leaves enough margin around the network
+for the smoothed silhouette to fit, whatever the smoothing and contrast;
+the zoom adds up to 20% of the network extent on top of that margin.
+The default value is 50.</p></dd>
 
 
 <dt id="arg-resolutionvalueinput">resolutionValueInput<a class="anchor" aria-label="anchor" href="#arg-resolutionvalueinput"></a></dt>
@@ -116,39 +170,261 @@ range is 0 to 100. The default value is 50.</p></dd>
 
 
 <dt id="arg-smoothvalueinput">smoothValueInput<a class="anchor" aria-label="anchor" href="#arg-smoothvalueinput"></a></dt>
-<dd><p>Numeric value for image smoothness. The variable
-range is 0 to 100. The default is 50.</p></dd>
+<dd><p>Numeric value for image smoothness. Sets the width
+(\(\sigma\)) of the Gaussian kernel used by the normalised convolution,
+scaled relative to <code>resolutionValueInput</code> so that changing the
+resolution does not change the apparent smoothing. Unlike in levi
+&lt; 2.0.0, this parameter no longer affects the value scale, only the
+level of detail. The variable range is 0 to 100. The default is 50.</p></dd>
 
 
 <dt id="arg-expressionlog">expressionLog<a class="anchor" aria-label="anchor" href="#arg-expressionlog"></a></dt>
-<dd><p>Logical variable to indicate Log2 normalization in the
-expression levels. The default is FALSE</p></dd>
+<dd><p>Logical. In ratio mode, TRUE back-transforms log2
+expression with 2^x before calculation. Ignored in logfc and zscore modes,
+which use log-scale columns directly. Default FALSE.</p></dd>
 
 
 <dt id="arg-contourlevi">contourLevi<a class="anchor" aria-label="anchor" href="#arg-contourlevi"></a></dt>
 <dd><p>Logical variable to allow contour lines. The default is
-TRUE.</p></dd>
+<code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-setcolor">setcolor<a class="anchor" aria-label="anchor" href="#arg-setcolor"></a></dt>
 <dd><p>Select the color palette to build the heatmat. There is
 two options the **Multicolor** has 20 color levels combined. The
-**Two colors** has two types of color and the options available are: *purple_pink*,
-*green_blue*, *blue_yellow*, *pink_green*, *orange_purple*, *green_marine*.</p></dd>
+**Two colors** has two types of color and the options available are:
+*purple_pink*, *green_blue*, *blue_yellow*, *pink_green*, *orange_purple*,
+*green_marine*.</p></dd>
+
+
+<dt id="arg-plot-d">plot3d<a class="anchor" aria-label="anchor" href="#arg-plot-d"></a></dt>
+<dd><p>Logical. When <code>TRUE</code>, an interactive 3D surface plot is
+additionally generated using <code>plotly</code>. Requires the <code>plotly</code>
+package. Default is <code>FALSE</code>.</p></dd>
+
+
+<dt id="arg-n-perm">n_perm<a class="anchor" aria-label="anchor" href="#arg-n-perm"></a></dt>
+<dd><p>Integer. Number of node-label permutations, default 0.
+Measured node expression pairs are shuffled together; missing positions stay
+fixed and edge signals are recalculated. Tests spatial association conditional
+on the chosen network/layout, not differential expression between replicates.
+Raw Monte Carlo p-values are (count + 1)/(n_perm + 1). A larger number
+improves resolution but does not establish biological validity.</p></dd>
+
+
+<dt id="arg-sig-level">sig_level<a class="anchor" aria-label="anchor" href="#arg-sig-level"></a></dt>
+<dd><p>Numeric (0-1). Significance threshold for the contour
+overlay. A contour is drawn wherever the p-value equals <code>sig_level</code>.
+Default is <code>0.05</code>.</p></dd>
+
+
+<dt id="arg-perm-side">perm_side<a class="anchor" aria-label="anchor" href="#arg-perm-side"></a></dt>
+<dd><p>Character. Which direction to test when
+<code>n_perm &gt; 0</code>. Options:</p><dl><dt><code>"both"</code></dt>
+<dd><p>(default) dashed contour for over-expression
+    + dotted for under-expression.</p></dd>
+
+  <dt><code>"over"</code></dt>
+<dd><p>Only the dashed contour.</p></dd>
+
+  <dt><code>"under"</code></dt>
+<dd><p>Only the dotted contour.</p></dd>
+
+
+</dl><p><code>result$pvalues</code> is a list with <code>$over</code> and <code>$under</code>
+matrices when <code>inference_unit = "cell"</code>, or <code>NULL</code> when
+<code>n_perm = 0</code> or in regional mode, where <code>perm_side</code> selects
+which significant regions are outlined.</p></dd>
+
+
+<dt id="arg-signal-mode">signal_mode<a class="anchor" aria-label="anchor" href="#arg-signal-mode"></a></dt>
+<dd><p>Character. How raw expression values are converted to
+the landscape score in \([0,1]\). Choose based on your data type:</p><dl><dt><code>"ratio"</code></dt>
+<dd><p>(default) \(Test / (Test + Control)\), without
+    min-max normalisation; equal nonzero values map to 0.5. Best for <strong>linear-scale</strong> data: raw counts,
+    TPM, FPKM, linear proteomics LFQ. Also correct when
+    <code>expressionLog = TRUE</code> is used to back-transform log2 microarray
+    intensities into linear scale.</p></dd>
+
+  <dt><code>"logfc"</code></dt>
+<dd><p>Sigmoid transformation:
+    \(1 / (1 + e^{-k \cdot \text{logFC}})\) where
+    \(k\) = <code>logfc_k</code> and
+    \(\text{logFC} = Test - Control\) for two log-scale columns,
+    or the supplied logFC in single-column mode.
+    Score 0.5 = no change; &gt; 0.5 = up-regulated; &lt; 0.5 = down-regulated.
+    Best for: <strong>RMA microarray</strong>, <strong>VST/rlog from DESeq2</strong>,
+    <strong>log2 proteomics</strong>, <strong>scRNA-seq</strong> <code>avg_log2FC</code>
+    (single-column mode with <code>readExpColumn("logFC-logFC")</code>).</p></dd>
+
+  <dt><code>"zscore"</code></dt>
+<dd><p>Z-scores the logFC distribution then maps to
+    \([0,1]\) via <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">pnorm()</a></code>. Score 0.5 = mean logFC of
+    measured nodes and derived edge support points; tails approach 0/1.
+    This is relative within each comparison and uses mean/SD, not a
+    robust estimator. It does not encode an absolute no-change baseline.</p></dd>
+
+
+</dl></dd>
+
+
+<dt id="arg-logfc-k">logfc_k<a class="anchor" aria-label="anchor" href="#arg-logfc-k"></a></dt>
+<dd><p>Numeric. Steepness of the sigmoid in <code>signal_mode =
+"logfc"</code>. Larger values make the transition from 0 to 1 sharper (more
+contrast between up/down). Default is <code>1</code>. Typical range: 0.5-3.
+Use <code>k = 0.5</code> for datasets with large logFC values (e.g., scRNA-seq
+fold-changes often range +/-5) and <code>k = 2</code> for tight fold-changes
+(e.g., +/-1 in microarray).</p></dd>
+
+
+<dt id="arg-p-adjust-method">p_adjust_method<a class="anchor" aria-label="anchor" href="#arg-p-adjust-method"></a></dt>
+<dd><p>Multiple-testing correction used only when
+<code>inference_unit = "cell"</code>, applied jointly to both
+directional families over occupied grid cells in each comparison. Default
+"BY" accommodates arbitrary dependence; "BH", "holm", "none" and other
+methods accepted by <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust</a></code> are available. Contours and
+<code>pvalues</code> use these adjusted values; <code>raw_pvalues</code> is unadjusted.</p></dd>
+
+
+<dt id="arg-region-threshold">region_threshold<a class="anchor" aria-label="anchor" href="#arg-region-threshold"></a></dt>
+<dd><p>Positive deviation from the neutral score 0.5 used
+to define a regional cell. The default 0.1 identifies cells &gt;= 0.6 or &lt;= 0.4.
+This parameter describes regions and does not assign statistical significance.</p></dd>
+
+
+<dt id="arg-region-min-cells">region_min_cells<a class="anchor" aria-label="anchor" href="#arg-region-min-cells"></a></dt>
+<dd><p>Minimum number of eight-connected grid cells retained
+as a region. Default is 3.</p></dd>
+
+
+<dt id="arg-inference-unit">inference_unit<a class="anchor" aria-label="anchor" href="#arg-inference-unit"></a></dt>
+<dd><p>Either "region" (default) or "cell" (legacy). With
+"region" and n_perm &gt; 0, regions are redetected in every node-label
+permutation and the observed mass of each region is compared with the
+maximum mass across all regions and both directions. Results are in
+regions$summary$PSpatial and $Significant; regions$null_max_mass stores
+the null maxima. This controls the search under the global exchangeable
+spatial null, conditional on network/layout. It does not establish
+significance of individual cells or genes, precise boundaries, or
+differences between biological replicates. pvalues and raw_pvalues are
+NULL in regional mode; the 2D plot labels areas rather than named gene
+peaks and white boundaries mark regions passing sig_level. The 3D plot
+shows the descriptive surface without regional boundaries.</p>
+<p>"cell" tests every occupied grid cell separately and adjusts the two
+directional families jointly with p_adjust_method. Cells are strongly
+correlated, so that adjustment is very conservative; the mode is kept for
+the graphical interface and for comparison with earlier versions. See
+<code><a href="../articles/levi_inference.html">vignette("levi_inference")</a></code> for which null answers which question.</p></dd>
+
+
+<dt id="arg-perm-strata">perm_strata<a class="anchor" aria-label="anchor" href="#arg-perm-strata"></a></dt>
+<dd><p>Optional vector defining exchangeability strata for the
+node-label permutation. A named vector is matched to network gene identifiers;
+an unnamed vector must follow network-node order. Signals are shuffled only
+among measured nodes in the same stratum. Useful for bins of mean expression,
+detection rate or network degree. Default `NULL` permutes all measured nodes.</p></dd>
+
+
+<dt id="arg-edge-weighting">edge_weighting<a class="anchor" aria-label="anchor" href="#arg-edge-weighting"></a></dt>
+<dd><p>Character. How the edge midpoints enter the
+landscape. <code>"midpoint"</code> (default, the historical behaviour) gives
+every node and every edge midpoint the same weight, so a hub of degree
+\(d\) surrounds itself with \(d\) support points and dominates its
+neighbourhood. <code>"degree"</code> weights the midpoint of edge \((i, j)\)
+by \((1/d_i + 1/d_j)/2\), so the midpoints around any node add up to
+one whatever its degree. <code>"none"</code> drops the midpoints and smooths
+the node values alone. All three keep the same coordinates, silhouette
+logic and permutation nulls; the choice is recorded in
+<code>metadata$edge_weighting</code> and reused by the sample-label tests.</p></dd>
+
+
+<dt id="arg--parsed-network-draw">.parsed_network, .draw<a class="anchor" aria-label="anchor" href="#arg--parsed-network-draw"></a></dt>
+<dd><p>Internal controls used to reuse a parsed network
+and suppress repeated drawing in resampling workflows.</p></dd>
 
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>Return a ggplot object and print a image (heatmat).</p>
-    </div>
+    <p>Invisibly returns a list (or a list of such lists, one per
+comparison, when <code>readExpColumn</code> carries more than one) containing:</p><dl><dt>comparison</dt>
+<dd><p>Name of the comparison (e.g. "Tumor-Normal").</p></dd>
+
+  <dt>landscape</dt>
+<dd><p>data.frame with the plotted surface in long format
+    (<code>Var1</code>, <code>Var2</code>, <code>z</code>). Cells outside the network
+    silhouette are <code>NA</code>, not <code>0</code>. Required by
+    <code><a href="leviDiff.html">leviDiff</a></code>.</p></dd>
+
+  <dt>scores</dt>
+<dd><p>data.frame with one row per network node
+    (<code>Gene</code>, <code>X</code>, <code>Y</code>, <code>LandscapeScore</code>,
+    <code>Rank</code>), ordered from the highest score to the lowest.</p></dd>
+
+  <dt>peaks</dt>
+<dd><p>data.frame with the automatically detected peaks and
+    valleys (<code>Type</code>, <code>NearestGene</code>, <code>MatrixRow</code>,
+    <code>MatrixCol</code>, <code>Score</code>).</p></dd>
+
+  <dt>pvalues</dt>
+<dd><p>list with the <code>$over</code> and <code>$under</code>
+    permutation p-value matrices in cell mode, or <code>NULL</code> when
+    <code>n_perm = 0</code> or <code>inference_unit = "region"</code>.</p></dd>
+
+  <dt>raw_pvalues</dt>
+<dd><p>Unadjusted directional permutation p-values, or NULL.</p></dd>
+
+  <dt>regions</dt>
+<dd><p>List with <code>summary</code> (one row per eight-connected
+    area) and <code>cells</code> (member grid cells). In regional inference mode,
+    the summary also contains <code>PSpatial</code> and <code>Significant</code>;
+    <code>null_max_mass</code> and <code>inference</code> record the null and method.
+    Otherwise regions are descriptive.</p></dd>
+
+  <dt>metadata</dt>
+<dd><p>Signal meaning, parameters, network, coordinates, missing
+    genes, RNG state before calculation and software versions. Call
+    <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> before levi() for reproducibility.</p></dd>
+
+  <dt>plot</dt>
+<dd><p>the ggplot object, also drawn on the active device.</p></dd>
+
+  <dt>plot3d</dt>
+<dd><p>the plotly surface when <code>plot3d = TRUE</code>, otherwise
+    <code>NULL</code>. Like <code>plot</code>, it is also shown when produced. To
+    save it from a chosen viewpoint, set the camera and write the file:</p><div class="sourceCode"><pre><code><span></span>
+<span>    <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">plotly</span><span class="fu">::</span><span class="fu">layout</span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">plot3d</span>, scene <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>camera <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>             eye <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1.6</span>, y <span class="op">=</span> <span class="op">-</span><span class="fl">1.6</span>, z <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu">htmlwidgets</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/htmlwidgets/man/saveWidget.html" class="external-link">saveWidget</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"surface.html"</span><span class="op">)</span>  <span class="co"># interactive, keeps the view</span></span>
+<span>    <span class="fu"><a href="../reference/leviSave3D.html">leviSave3D</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"surface.png"</span><span class="op">)</span>                <span class="co"># static; needs kaleido</span></span>
+<span>    </span></code></pre></div><p><code>eye</code> is the camera position relative to the centre of the
+    surface; larger values move it away. Interactively, rotate the surface
+    and use the camera icon of the plotly toolbar to save the current
+    view as PNG.</p></dd>
+
+
+</dl></div>
     <div id="details">
     <h2>Details</h2>
     <p>Integrates the biological network and gene expression levels
-(or other type of data)</p>
+(or other type of data). In single-column ratio mode, the score is
+abundance/(abundance + 1), with no control comparison. Missing measurements
+and undefined ratios are assigned 0.5. Surface, scores, peaks and tests use
+the same Gaussian-smoothed signal. A gene's smoothed score also reflects
+its neighbours, so a locally unchanged gene can receive a non-neutral score.</p>
+<p>Every edge contributes a support point at its midpoint, carrying the mean
+of its two endpoints. With the default <code>edge_weighting = "midpoint"</code>
+a hub with many edges places many support points around itself and
+dominates the local average: the landscape is implicitly weighted by
+degree. The node-label permutation test keeps the network fixed, so this
+weighting is part of its null and does not bias the inference, but it does
+shape what the eye reads on the figure. <code>edge_weighting = "degree"</code>
+removes that emphasis while keeping the edges as carriers of neighbourhood
+signal; <code>"none"</code> smooths the nodes alone.</p>
     </div>
     <div id="author">
     <h2>Author</h2>
-    <p>Isabelle Mira da Silva (isabelle.silva@unesp.br), José Rafael Pilan (rafael.pilan@unesp.br)</p>
+    <p>Isabelle Mira da Silva (isabelle.silva@unesp.br),
+Jose Rafael Pilan (rafael.pilan@unesp.br)</p>
     </div>
 
     <div id="ref-examples">
@@ -161,21 +437,19 @@ two options the **Multicolor** has 20 color levels combined. The
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">multicolor</span> <span class="op">&lt;-</span> <span class="fu">levi</span><span class="op">(</span>networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span></span>
 <span class="r-in"><span>   expressionInput <span class="op">=</span> <span class="va">template_expression</span>, fileTypeInput <span class="op">=</span> <span class="st">"dat"</span>,</span></span>
-<span class="r-in"><span>   geneSymbolnput <span class="op">=</span> <span class="st">"ID"</span>,</span></span>
+<span class="r-in"><span>   geneSymbolInput <span class="op">=</span> <span class="st">"ID"</span>,</span></span>
 <span class="r-in"><span>   readExpColumn<span class="op">=</span><span class="fu"><a href="readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"TumorCurrentSmoker-NormalNeverSmoker"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>   contrastValueInput <span class="op">=</span> <span class="fl">50</span>, resolutionValueInput  <span class="op">=</span> <span class="fl">50</span>, zoomValueInput <span class="op">=</span> <span class="fl">50</span>,</span></span>
 <span class="r-in"><span>   smoothValueInput <span class="op">=</span> <span class="fl">50</span>, expressionLog <span class="op">=</span> <span class="cn">FALSE</span>, contourLevi <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Coordinate system already present. Adding new coordinate system, which will</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> replace the existing one.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> There are 1 nodes without expression value, see log in path: /tmp/RtmpYdRnjM/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span>
 <span class="r-plt img"><img src="levi-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">twocolors</span> <span class="op">&lt;-</span> <span class="fu">levi</span><span class="op">(</span>networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span></span>
 <span class="r-in"><span>   expressionInput <span class="op">=</span> <span class="va">template_expression</span>, fileTypeInput <span class="op">=</span> <span class="st">"dat"</span>,</span></span>
-<span class="r-in"><span>   geneSymbolnput <span class="op">=</span> <span class="st">"ID"</span>,</span></span>
+<span class="r-in"><span>   geneSymbolInput <span class="op">=</span> <span class="st">"ID"</span>,</span></span>
 <span class="r-in"><span>   readExpColumn <span class="op">=</span> <span class="fu"><a href="readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"TumorCurrentSmoker-NormalNeverSmoker"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>   setcolor <span class="op">=</span> <span class="st">"pink_green"</span>, contourLevi <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Coordinate system already present. Adding new coordinate system, which will</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> replace the existing one.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> There are 1 nodes without expression value, see log in path: /tmp/RtmpYdRnjM/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span>
 <span class="r-plt img"><img src="levi-2.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
@@ -191,7 +465,7 @@ two options the **Multicolor** has 20 color levels combined. The
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer></div>

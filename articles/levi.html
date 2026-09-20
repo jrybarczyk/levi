@@ -32,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">levi</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.20.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.99.0</span>
       </span>
     </div>
 
@@ -43,6 +43,24 @@
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="../articles/levi_guide.html">levi: A Complete User Guide</a>
+    </li>
+    <li>
+      <a href="../articles/levi_inference.html">levi: Which null answers which question</a>
+    </li>
+    <li>
+      <a href="../articles/levi_validation.html">levi: Calibration and a real dataset</a>
+    </li>
+  </ul>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
@@ -67,10 +85,10 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>levi - Landscape Expression Visualization
 Interface</h1>
-                        <h4 data-toc-skip class="author">Isabelle M. da
-Silva, José R. Pilan, Agnes A. S. Takeda, Jose L. Rybarczyk-Filho</h4>
+                        <h4 data-toc-skip class="author">José R. Pilan,
+Agnes A. S. Takeda, Jose L. Rybarczyk-Filho</h4>
             
-            <h4 data-toc-skip class="date">27 August 2025</h4>
+            <h4 data-toc-skip class="date">20 September 2026</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jrybarczyk/levi/blob/master/vignettes/levi.Rmd" class="external-link"><code>vignettes/levi.Rmd</code></a></small>
       <div class="hidden name"><code>levi.Rmd</code></div>
@@ -83,37 +101,34 @@ Silva, José R. Pilan, Agnes A. S. Takeda, Jose L. Rybarczyk-Filho</h4>
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <p>The <strong>levi (Landscape Expression Visualization
-Interface)</strong> is a package for the R environment, developed to
-enable the visualization of the projection of gene expression on a
-biological network. <strong>levi</strong> is based on two other
-software, the first is the Viacomplex (<span class="citation">Castro et
-al. (2009)</span>), which was written in Fortran using the Dislin
-library to plot the data. The second is Galant (<span class="citation">Camilo et al. (2013)</span>), which corresponds to a
-plugin for Cytoscape software.</p>
-<p>Two files are required to use <strong>levi</strong>: The file
-containing the expression levels of the genes and a file containing the
-biological network.</p>
+Interface)</strong> is a package for the R environment that integrates
+gene expression data with biological networks, generating a topographic
+landscape where elevated regions correspond to differentially expressed
+genes and their network neighbors.</p>
+<p><strong>levi</strong> is based on two prior tools: Viacomplex (<span class="citation">Castro et al. (2009)</span>), written in Fortran using
+the Dislin library, and Galant (<span class="citation">Camilo et al.
+(2013)</span>), a Cytoscape plugin.</p>
+<p>Two files are required to use <strong>levi</strong>: a gene
+expression file and a biological network file. Alternatively, results
+from differential expression tools (DESeq2, edgeR, limma) or single-cell
+tools (Seurat) can be passed directly as R objects.</p>
+<p><strong>Web interface (no installation required):</strong> An
+interactive demo is available via Binder at:
+<code>https://mybinder.org/v2/gh/jrybarczyk/levi/master?urlpath=shiny/inst/shiny/</code></p>
 </div>
 <div class="section level2">
-<h2 id="files">Files<a class="anchor" aria-label="anchor" href="#files"></a>
+<h2 id="input-files">Input Files<a class="anchor" aria-label="anchor" href="#input-files"></a>
 </h2>
 <div class="section level3">
-<h3 id="gene-expression-levels">Gene Expression Levels<a class="anchor" aria-label="anchor" href="#gene-expression-levels"></a>
+<h3 id="gene-expression-data">Gene Expression Data<a class="anchor" aria-label="anchor" href="#gene-expression-data"></a>
 </h3>
-<p>This file should contain the genes of interest previously normalized
-by the user. The expression file (see <a href="https://bit.ly/2KSBaOo" class="external-link">Example</a>) must have a column with the
-identification of genes (Gene Symbol, Entrez, etc.) and at least one
-column with gene expression levels (treatment, case, control, etc.). The
-user can compare the expression levels between samples if there are more
-columns containing these data.</p>
-<p>If the expression file does not have values for all the genes of the
-network, a message will be displayed showing log file path to a
-temporary directory with the gene names. In the
-<strong>landscape</strong> construction, genes with no expression value
-will be displayed with values close to 0.5 demonstrating that there were
-no changes (down-regulated or up-regulated genes).</p>
-<p>Data sets of gene expression can be obtained from online
-databases:</p>
+<p>The expression file must contain a column with gene identifiers (Gene
+Symbol, Entrez ID, Ensembl, etc.) and at least one column with
+expression values (e.g., normalized counts, log2 fold-change).</p>
+<p>If some network genes have no expression value, <strong>levi</strong>
+assigns a neutral value (0.5), representing no change, and generates a
+log file listing the missing genes.</p>
+<p>Expression data can be obtained from:</p>
 <ul>
 <li><a href="https://www.ncbi.nlm.nih.gov/geo/" class="external-link">Gene Expression Omnibus
 (GEO)</a></li>
@@ -127,326 +142,1718 @@ databases:</p>
 <div class="section level3">
 <h3 id="biological-network">Biological Network<a class="anchor" aria-label="anchor" href="#biological-network"></a>
 </h3>
-<p>The <strong>levi</strong> supports several extensions of biological
-network files (*.net, *.dyn, *.txt, *.dat). The user should build the
-biological network using specific tools such as: Cytoscape, RedeR,
-Medusa, etc. To build the biological network is recommended the
-obtention of interaction data/ biological associations from online
-repositories:</p>
-<ul>
-<li><a href="https://string-db.org/" class="external-link">STRING database</a></li>
-<li><a href="http://starbase.sysu.edu.cn/" class="external-link">StarBase</a></li>
-<li><a href="http://www.mirbase.org/" class="external-link">miRBase</a></li>
-<li><a href="http://www.lncrnadb.org/" class="external-link">lncRNAdb</a></li>
-<li><a href="http://www.lbbc.ibb.unesp.br/htri" class="external-link">HTRIdb</a></li>
-</ul>
+<p><strong>levi</strong> supports the following network file
+formats:</p>
 <table class="table">
-<colgroup>
-<col width="13%">
-<col width="22%">
-<col width="63%">
-</colgroup>
 <thead><tr class="header">
 <th align="center">Extension</th>
-<th align="center">File Type</th>
-<th align="center">Link</th>
+<th align="center">Format</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="center">dat</td>
-<td align="center">Medusa (DAT)</td>
-<td align="center"><a href="https://bit.ly/2sj6RJh" class="external-link">Example DAT</a></td>
+<td align="center"><code>dat</code></td>
+<td align="center">Medusa (DAT) <span class="citation">(Hooper and Bork
+2005)</span>
+</td>
 </tr>
 <tr class="even">
-<td align="center">dyn</td>
-<td align="center">RedeR (DYN)</td>
-<td align="center"><a href="https://bit.ly/2IJGaZ7" class="external-link">Example DYN</a></td>
+<td align="center"><code>dyn</code></td>
+<td align="center">RedeR (DYN) <span class="citation">(Castro et al.
+2012)</span>
+</td>
 </tr>
 <tr class="odd">
-<td align="center">net</td>
-<td align="center">Pajek (NET)</td>
-<td align="center"><a href="https://bit.ly/2IKzaLv" class="external-link">Example NET</a></td>
+<td align="center"><code>net</code></td>
+<td align="center">Pajek (NET) <span class="citation">(Batagelj and
+Mrvar 1998)</span>
+</td>
 </tr>
 <tr class="even">
-<td align="center">stg</td>
-<td align="center">STRING / STITCH</td>
-<td align="center"><a href="https://bit.ly/2xjnaLU" class="external-link">Example
-coordinates</a></td>
-</tr>
-<tr class="odd">
-<td align="center">stg</td>
-<td align="center">STRING / STITCH</td>
-<td align="center"><a href="https://bit.ly/2J2OToH" class="external-link">Example
-interactions</a></td>
+<td align="center"><code>stg</code></td>
+<td align="center">STRING / STITCH <span class="citation">(Szklarczyk et
+al. 2021)</span>
+</td>
 </tr>
 </tbody>
 </table>
-<p>#Viewing Modes</p>
-<p><strong>levi</strong> has two viewing modes: <strong>Graphical User
-Interface (GUI)</strong> and <strong>script</strong>.</p>
+<p>Network interaction data can be obtained from:</p>
+<ul>
+<li><a href="https://string-db.org/" class="external-link">STRING database</a></li>
+<li><a href="https://mirbase.org/" class="external-link">miRBase</a></li>
+</ul>
 </div>
 <div class="section level3">
-<h3 id="graphical-user-interface-gui">Graphical User Interface (GUI)<a class="anchor" aria-label="anchor" href="#graphical-user-interface-gui"></a>
+<h3 id="networks-with-no-coordinates">Networks with no coordinates<a class="anchor" aria-label="anchor" href="#networks-with-no-coordinates"></a>
 </h3>
-<p>The GUI mode was developed using Shiny package (Figure 1). This
-viewing mode can be used in the R environment (browser=FALSE) or in the
-user’s default operating system browser (browser=TRUE).</p>
+<p>Every format above carries a position for each node, because
+<strong>levi</strong> draws its landscape over the plane the network
+occupies. Interaction databases and collaborators usually hand over
+something simpler: a list of pairs, with no coordinates at all.</p>
+<p><code><a href="../reference/leviFromEdges.html">leviFromEdges()</a></code> computes them with
+<strong>igraph</strong> <span class="citation">(Csárdi and Nepusz
+2006)</span> and returns the two tables <code><a href="../reference/levi.html">levi()</a></code> expects:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/LEVIui.html">LEVIui</a></span><span class="op">(</span>browser<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>  <span class="co">#Launch Levi to Browser.</span></span>
-<span><span class="fu"><a href="../reference/LEVIui.html">LEVIui</a></span><span class="op">(</span>browser<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span> <span class="co">#Launch Levi to R environment.</span></span></code></pre></div>
-<center>
-<img src="Newlevi.png" width="150%">
-</center>
-<center>
-<b>Figure 2: </b> Graphical User Interface (GUI).
-</center>
-<ul>
-<li>
-<strong>1</strong> - <strong>Tabs</strong>
-<ul>
-<li>
-<strong>File</strong> - General options for uploading the data
-files.</li>
-<li>
-<strong>Settings</strong> - Options to build the
-<strong>landscape</strong>.</li>
-</ul>
-</li>
-<li>
-<strong>2</strong> - <strong>Network input type:</strong> -
-Selection of the biological network input format. The options are
-available on the table 1.</li>
-<li>
-<strong>3</strong> - <strong>Upload the network file</strong> -
-Input button to select the biological network file.</li>
-<li>
-<strong>4</strong> - <strong>Upload the expression file</strong> -
-Input button to select the gene expression levels file.</li>
-<li>
-<strong>5</strong> - <strong>Expression values in log scale</strong>
-- select when there is low variation between expression data</li>
-<li>
-<strong>6</strong> - <strong>Selected fields</strong> - Selecting
-the type of analysis. Comparison between two samples or a single
-sample.</li>
-<li>
-<strong>7</strong> - <strong>Select gene symbol field</strong> -
-Selection of the gene ID contained in the gene expression levels file.
-The gene ID in the biological network file must be the same in the gene
-expression levels file. <strong>Select test field</strong>
-</li>
-<li>Select the case/test sample. <strong>Select control field</strong> -
-Select the control sample. If <strong>levi</strong> detects the
-case/test sample and control sample as equal, then <strong>levi</strong>
-will apply the “single sample” analysis.</li>
-<li>
-<strong>8</strong> - <strong>Chart Colors</strong> - Color palette
-to build the <strong>landscape</strong>. There is two options the
-<strong>Multicolor</strong> has 20 color levels combined. The
-<strong>Two colors</strong> has two categories of color palettes,
-multicolor and two colors. For the selection of two colors the available
-options are: <em>purple_pink</em>, <em>green_blue</em>,
-<em>blue_yellow</em>, <em>pink_green</em>, <em>orange_purple</em>,
-<em>green_marine</em>. Both of them is targeted to show the biological
-network with higher expression. (Figure 3 and Figure 4).</li>
-<li>
-<strong>9</strong> - <strong>Chart with contour</strong> - Enable or
-disable the contour lines in the <strong>landscape</strong>.</li>
-<li>
-<strong>10</strong> - <strong>landscape</strong> Image display area.
-The user can select specific areas of the image to inspect the gene name
-and position.</li>
-<li>
-<strong>11</strong> - <strong>Expression area:</strong> - Total
-expression value of the selected area in the image.</li>
-<li>
-<strong>12</strong> - <strong>Download options</strong>
-<ul>
-<li>
-<strong>File format to landscape</strong> - Select the output format
-of the <strong>landscape</strong>. The options available are: TIFF, BMP,
-JPEG and PNG. We recommend using this option in the browser.</li>
-<li>
-<strong>Download Plot</strong> - Button to save the file.</li>
-</ul>
-</li>
-<li>
-<strong>13</strong> - Visualization of gene name and expression
-value of the selected area in the <strong>landscape</strong>. The user
-can save the table in a csv file (button <strong>Download
-Data</strong>)</li>
-<li>
-<strong>14</strong> - <strong>Settings</strong>
-<ul>
-<li>
-<strong>Contrast</strong> - Constrast value in the
-<strong>landscape</strong>. The variable range is 1 to 100. The default
-value is 50.</li>
-<li>
-<strong>Resolution</strong> - Image size of the
-<strong>landscape</strong>. The variable range is 1 to 100. The default
-value is 50. If this parameter is higher, then the total time required
-will be longer.</li>
-<li>
-<strong>Smoothing</strong> - Smoothing of the
-<strong>landscape</strong>. The variable range is 1 to 100. The default
-value is 50.I f this parameter is higher, then the total time required
-will be longer.</li>
-<li>
-<strong>Zoom</strong> - Zoom value for the
-<strong>landscape</strong>. The variable range is 1 to 100. The default
-value is 50.</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="script">
-<em>Script</em><a class="anchor" aria-label="anchor" href="#script"></a>
-</h3>
-<p>The <strong>levi</strong> scripting mode also has the settings for
-<strong>landscape</strong> building (see example below).</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Warning: replacing previous import 'S4Arrays::makeNindexFromArrayViewport' by</span></span>
+<span><span class="co">## 'DelayedArray::makeNindexFromArrayViewport' when loading 'SummarizedExperiment'</span></span></code></pre>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">interactions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HUB"</span>, <span class="st">"HUB"</span>, <span class="st">"HUB"</span>, <span class="st">"HUB"</span>, <span class="st">"N1"</span>, <span class="st">"N2"</span>, <span class="st">"N3"</span>, <span class="st">"N4"</span><span class="op">)</span>,</span>
+<span>    to   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"N1"</span>, <span class="st">"N2"</span>, <span class="st">"N3"</span>, <span class="st">"N4"</span>, <span class="st">"N5"</span>, <span class="st">"N6"</span>, <span class="st">"N7"</span>, <span class="st">"N8"</span><span class="op">)</span>,</span>
+<span>    stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">template_network</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package<span class="op">=</span><span class="st">"levi"</span><span class="op">)</span>,<span class="st">"extdata"</span>,</span>
-<span>                                <span class="st">"medusa.dat"</span>, fsep <span class="op">=</span> <span class="va">.Platform</span><span class="op">$</span><span class="va">file.sep</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span>                       <span class="co"># force-directed layouts are stochastic</span></span>
+<span><span class="va">net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromEdges.html">leviFromEdges</a></span><span class="op">(</span><span class="va">interactions</span>, layout <span class="op">=</span> <span class="st">"kk"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Network laid out with 'kk': 9 nodes, 8 edges.</span></span></code></pre>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">net</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   name        x         y</span></span>
+<span><span class="co">## 1  HUB 50.50000  50.50000</span></span>
+<span><span class="co">## 2   N1 38.79074  76.13341</span></span>
+<span><span class="co">## 3   N2 24.86659  38.79074</span></span>
+<span><span class="co">## 4   N3 62.20926  24.86659</span></span>
+<span><span class="co">## 5   N4 76.13341  62.20926</span></span>
+<span><span class="co">## 6   N5 27.88855 100.00000</span></span></code></pre>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">expression</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    ID      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HUB"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"N"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    Test    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">200</span>, <span class="fl">200</span>, <span class="fl">200</span>, <span class="fl">200</span>, <span class="fl">5</span>, <span class="fl">5</span>, <span class="fl">5</span>, <span class="fl">5</span><span class="op">)</span>,</span>
+<span>    Control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">200</span>, <span class="fl">200</span>, <span class="fl">200</span>, <span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">template_expression</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package<span class="op">=</span><span class="st">"levi"</span><span class="op">)</span>,</span>
-<span>                                <span class="st">"extdata"</span>,<span class="st">"expression.dat"</span>, </span>
-<span>                                fsep <span class="op">=</span> <span class="va">.Platform</span><span class="op">$</span><span class="va">file.sep</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">multicolor</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span>networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
-<span>                expressionInput <span class="op">=</span> <span class="va">template_expression</span>, fileTypeInput <span class="op">=</span> <span class="st">"dat"</span>,</span>
-<span>                geneSymbolnput <span class="op">=</span> <span class="st">"ID"</span>, </span>
-<span>                readExpColumn<span class="op">=</span></span>
-<span>                <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"TumorCurrentSmoker-NormalNeverSmoker"</span><span class="op">)</span>, </span>
-<span>                contrastValueInput <span class="op">=</span> <span class="fl">50</span>, resolutionValueInput  <span class="op">=</span> <span class="fl">50</span>, </span>
-<span>                zoomValueInput <span class="op">=</span> <span class="fl">50</span>, smoothValueInput <span class="op">=</span> <span class="fl">50</span>, contourLevi <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Coordinate system already present. Adding new coordinate system, which will</span></span>
-<span><span class="co">## replace the existing one.</span></span></code></pre>
-<p><img src="levi_files/figure-html/unnamed-chunk-2-1.png" width="576"></p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">twocolors</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span>networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
-<span>                expressionInput <span class="op">=</span> <span class="va">template_expression</span>, fileTypeInput <span class="op">=</span> <span class="st">"dat"</span>,</span>
-<span>                geneSymbolnput <span class="op">=</span> <span class="st">"ID"</span>, </span>
-<span>                readExpColumn<span class="op">=</span></span>
-<span>                <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"TumorCurrentSmoker-NormalNeverSmoker"</span><span class="op">)</span>,</span>
-<span>                setcolor <span class="op">=</span> <span class="st">"pink_green"</span>, contourLevi <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Coordinate system already present. Adding new coordinate system, which will</span></span>
-<span><span class="co">## replace the existing one.</span></span></code></pre>
-<p><img src="levi_files/figure-html/unnamed-chunk-2-2.png" width="576">
-The script mode allows the user to compare combinations between two
-experiments in the gene expression levels file. The readExpColumn
-function can be used to this task to inform the combination separating
-by dash (-) and to add more combinations separate by comma (,).</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
-<span><span class="va">base</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"TumorFormerSmoker-NormalFormerSmoker"</span>, </span>
-<span>                        <span class="st">"TumorNeverSmoker-TumorNeverSmoker"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">template_network</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package<span class="op">=</span><span class="st">"levi"</span><span class="op">)</span>,<span class="st">"extdata"</span>,</span>
-<span>                                <span class="st">"medusa.dat"</span>, fsep <span class="op">=</span> <span class="va">.Platform</span><span class="op">$</span><span class="va">file.sep</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">template_expression</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package<span class="op">=</span><span class="st">"levi"</span><span class="op">)</span>,</span>
-<span>                                <span class="st">"extdata"</span>,<span class="st">"expression.dat"</span>, </span>
-<span>                                fsep <span class="op">=</span> <span class="va">.Platform</span><span class="op">$</span><span class="va">file.sep</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">multicolor</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span>networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
-<span>                    expressionInput <span class="op">=</span> <span class="va">template_expression</span>, </span>
-<span>                    fileTypeInput <span class="op">=</span> <span class="st">"dat"</span>,</span>
-<span>                    geneSymbolnput <span class="op">=</span> <span class="st">"ID"</span>, readExpColumn<span class="op">=</span> <span class="va">base</span>, </span>
-<span>                    contrastValueInput <span class="op">=</span> <span class="fl">50</span>, resolutionValueInput  <span class="op">=</span> <span class="fl">50</span>, </span>
-<span>                    zoomValueInput <span class="op">=</span> <span class="fl">50</span>, smoothValueInput <span class="op">=</span> <span class="fl">50</span>, </span>
-<span>                    contourLevi <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Coordinate system already present. Adding new coordinate system, which will</span></span>
-<span><span class="co">## replace the existing one.</span></span></code></pre>
-<p><img src="levi_files/figure-html/unnamed-chunk-3-1.png" width="576"></p>
-<pre><code><span><span class="co">## Coordinate system already present. Adding new coordinate system, which will</span></span>
-<span><span class="co">## replace the existing one.</span></span></code></pre>
-<p><img src="levi_files/figure-html/unnamed-chunk-3-2.png" width="576"></p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">twocolors</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span>networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
-<span>                expressionInput <span class="op">=</span> <span class="va">template_expression</span>, fileTypeInput <span class="op">=</span> <span class="st">"dat"</span>,</span>
-<span>                geneSymbolnput <span class="op">=</span> <span class="st">"ID"</span>, </span>
-<span>                readExpColumn<span class="op">=</span> <span class="va">base</span>,</span>
-<span>                setcolor <span class="op">=</span> <span class="st">"pink_green"</span>, contourLevi <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Coordinate system already present. Adding new coordinate system, which will</span></span>
-<span><span class="co">## replace the existing one.</span></span></code></pre>
-<p><img src="levi_files/figure-html/unnamed-chunk-3-3.png" width="576"></p>
-<pre><code><span><span class="co">## Coordinate system already present. Adding new coordinate system, which will</span></span>
-<span><span class="co">## replace the existing one.</span></span></code></pre>
-<p><img src="levi_files/figure-html/unnamed-chunk-3-4.png" width="576"></p>
+<span><span class="va">res_edges</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput  <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">nodes</span>,</span>
+<span>    networkInteractionsInput <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">edges</span>,</span>
+<span>    fileTypeInput            <span class="op">=</span> <span class="st">"stg"</span>,</span>
+<span>    expressionInput          <span class="op">=</span> <span class="va">expression</span>,</span>
+<span>    geneSymbolInput          <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>    readExpColumn            <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"Test-Control"</span><span class="op">)</span>,</span>
+<span>    resolutionValueInput     <span class="op">=</span> <span class="fl">30</span>,</span>
+<span>    smoothValueInput         <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></code></pre></div>
+<p><img src="levi_files/figure-html/unnamed-chunk-1-1.png" class="r-plt" alt="" width="480"></p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res_edges</span><span class="op">$</span><span class="va">scores</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene"</span>, <span class="st">"LandscapeScore"</span>, <span class="st">"Rank"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<pre><code><span><span class="co">##   Gene LandscapeScore Rank</span></span>
+<span><span class="co">## 1  HUB         0.9524    1</span></span>
+<span><span class="co">## 2   N1         0.9027    2</span></span>
+<span><span class="co">## 3   N2         0.9027    3</span></span>
+<span><span class="co">## 4   N3         0.9027    4</span></span>
+<span><span class="co">## 5   N4         0.9027    5</span></span>
+<span><span class="co">## 6   N5         0.0854    6</span></span>
+<span><span class="co">## 7   N6         0.0854    7</span></span>
+<span><span class="co">## 8   N7         0.0854    8</span></span>
+<span><span class="co">## 9   N8         0.0854    9</span></span></code></pre>
+<p>A caveat worth keeping in mind: the layout is an analytical choice,
+not only an aesthetic one. The same expression values arranged
+differently give a different landscape, because <strong>levi</strong>
+reads neighbourhoods. Where a curated layout already exists, prefer it
+over a computed one.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="session-information">Session information<a class="anchor" aria-label="anchor" href="#session-information"></a>
+<h2 id="viewing-modes">Viewing Modes<a class="anchor" aria-label="anchor" href="#viewing-modes"></a>
 </h2>
-<pre><code><span><span class="co">## R version 4.5.1 (2025-06-13)</span></span>
+<div class="section level3">
+<h3 id="graphical-user-interface-gui">Graphical User Interface (GUI)<a class="anchor" aria-label="anchor" href="#graphical-user-interface-gui"></a>
+</h3>
+<p>The GUI runs locally via Shiny and covers the same analysis as script
+mode: it calls <code><a href="../reference/levi.html">levi()</a></code> with the parameters chosen in the
+side panel, so a landscape built in the interface and one built from a
+script agree, p-values included.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/LEVIui.html">LEVIui</a></span><span class="op">(</span>browser <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>   <span class="co"># Opens in the system browser</span></span>
+<span><span class="fu"><a href="../reference/LEVIui.html">LEVIui</a></span><span class="op">(</span>browser <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>  <span class="co"># Opens inside RStudio</span></span></code></pre></div>
+<center>
+<img src="levi.png" width="100%">
+</center>
+<center>
+<b>Figure 1:</b> The interface after a run on the example data, with the
+<i>File</i> tab of the side panel, the 2D landscape and the genes under
+the area selected on the map.
+</center>
+<div class="section level4">
+<h4 id="side-panel">Side panel<a class="anchor" aria-label="anchor" href="#side-panel"></a>
+</h4>
+<p>The side panel has two tabs. <strong>File</strong> holds everything
+needed for a run; <strong>Settings</strong> holds the parameters that
+change the landscape and the test.</p>
+<p><em>File tab</em></p>
+<ul>
+<li>
+<strong>Network input type</strong> and <strong>Upload the network
+file</strong>: the network format (Medusa DAT, RedeR DYN, Pajek NET or
+STRING/STITCH) and the file itself. The STRING/STITCH option asks for
+two files, coordinates and interactions.</li>
+<li>
+<strong>Expression data source</strong>: a tab-delimited file, or a
+Bioconductor object saved as <code>.rds</code>
+(<code>SummarizedExperiment</code>, <code>SingleCellExperiment</code> or
+<code>ExpressionSet</code>). For a file, tick <strong>Expression values
+in log scale</strong> when the columns are log2 values and choose
+<strong>Two Samples</strong> (test against control) or <strong>One
+Sample</strong>. For an object, choose the assay, the condition column
+and the test and control levels.</li>
+<li>
+<strong>Select ID field</strong>, <strong>Select test
+field</strong>, <strong>Select control field</strong>: the column with
+the gene identifiers, which must match the node names of the network,
+and the two columns to compare.</li>
+<li>
+<strong>Colour scale</strong>: <em>Multicolor</em>, or <em>Two
+colors</em> with one of six palettes. Colours are applied without
+re-running.</li>
+<li>
+<strong>Chart with contour</strong> adds contour lines to the map.
+<strong>3D surface</strong> builds the interactive surface and brings
+the <em>3D surface</em> tab to the front.</li>
+<li>
+<strong>Highlight genes</strong> draws a circle, in the chosen
+colour, at the grid cell of each gene listed. <strong>Label peaks on
+map</strong> writes the name of the gene closest to each detected peak
+and valley.</li>
+<li>
+<strong>Run</strong> builds the landscape.</li>
+</ul>
+<p><em>Settings tab</em></p>
+<ul>
+<li>
+<strong>Contrast</strong>, <strong>Resolution</strong>,
+<strong>Smoothing</strong> and <strong>Zoom</strong>: the visual
+parameters of <code><a href="../reference/levi.html">levi()</a></code>. Contrast sets how tightly the
+silhouette hugs the network, resolution the grid size, smoothing the
+width of the Gaussian kernel and zoom the margin around the network.
+Their ranges and effects are tabulated in
+<code><a href="../articles/levi_guide.html">vignette("levi_guide")</a></code>.</li>
+<li>
+<strong>Signal mode</strong> and <strong>logFC steepness k</strong>:
+how expression is turned into the landscape score, see <em>Signal
+transformation</em>.</li>
+<li>
+<strong>Permutations</strong>, <strong>Test unit</strong>,
+<strong>Test direction</strong> and <strong>Significance level</strong>:
+the node-label permutation test. With permutations above zero the
+significant regions are outlined and labelled on the map; the default
+test unit is the region (maximum regional mass), the legacy per-cell
+test is still offered.</li>
+</ul>
+</div>
+<div class="section level4">
+<h4 id="results">Results<a class="anchor" aria-label="anchor" href="#results"></a>
+</h4>
+<p>The main panel shows the figure in two tabs and the tables in
+four.</p>
+<ul>
+<li>
+<strong>2D landscape</strong>: the map, with a format selector
+(TIFF, BMP, JPEG, PNG) and <strong>Download Plot</strong>. Click and
+drag on the map to select an area: <strong>Expression area</strong>
+shows the summed score of the selected cells and the
+<strong>Genes</strong> tab lists the genes under the selection.</li>
+<li>
+<strong>3D surface</strong>: the interactive surface, shown when
+<em>3D surface</em> is ticked. Rotate it, then use the camera icon of
+the toolbar to save a PNG of the current view, or <strong>Download 3D
+(HTML)</strong> to keep the view in an interactive file. The camera of
+the current view is printed as R code, ready to paste into
+<code>leviSave3D(camera = ...)</code> to reproduce it from a
+script.</li>
+<li>
+<strong>Genes</strong>: the genes under the area selected on the 2D
+map. This tab is shown only while the 2D map is in front.</li>
+<li>
+<strong>Node scores</strong>: the landscape score of every node,
+ranked, with a CSV download. This is <code>result$scores</code> of
+script mode.</li>
+<li>
+<strong>Peaks and valleys</strong>: the detected extrema and the
+closest gene to each. This is <code>result$peaks</code>.</li>
+<li>
+<strong>Regions</strong>: the connected areas of the landscape
+beyond the neutral score, with their size, mass and peak score; after a
+permutation test, the regional p-value and whether the region passes the
+significance level. This is <code>result$regions$summary</code>.</li>
+</ul>
+<center>
+<img src="levi_3d.png" width="100%">
+</center>
+<center>
+<b>Figure 2:</b> The <i>Settings</i> tab of the side panel, the 3D
+surface and the regions table after a permutation test with 100
+iterations.
+</center>
+<p>A busy indicator is shown at the top of the page while the landscape
+or the permutation test is being computed.</p>
+</div>
+</div>
+<div class="section level3">
+<h3 id="script-mode">Script Mode<a class="anchor" aria-label="anchor" href="#script-mode"></a>
+</h3>
+<div class="section level4">
+<h4 id="basic-usage">Basic usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
+</h4>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">template_network</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package <span class="op">=</span> <span class="st">"levi"</span><span class="op">)</span>, <span class="st">"extdata"</span>,</span>
+<span>                              <span class="st">"medusa.dat"</span>, fsep <span class="op">=</span> <span class="va">.Platform</span><span class="op">$</span><span class="va">file.sep</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">template_expression</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package <span class="op">=</span> <span class="st">"levi"</span><span class="op">)</span>, <span class="st">"extdata"</span>,</span>
+<span>                                 <span class="st">"expression.dat"</span>, fsep <span class="op">=</span> <span class="va">.Platform</span><span class="op">$</span><span class="va">file.sep</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">multicolor</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    expressionInput        <span class="op">=</span> <span class="va">template_expression</span>,</span>
+<span>    fileTypeInput          <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput        <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>    readExpColumn          <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"TumorCurrentSmoker-NormalNeverSmoker"</span><span class="op">)</span>,</span>
+<span>    contrastValueInput     <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>    resolutionValueInput   <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>    zoomValueInput         <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>    smoothValueInput       <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>    contourLevi            <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmprLVkEp/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
+<p><img src="levi_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="576"></p>
+<p>The example dataset contains lung adenocarcinoma microarray data
+<span class="citation">(Landi et al. 2008)</span> comparing tumor tissue
+from current smokers against normal tissue from never-smokers. Elevated
+regions (warm colors) represent network areas where genes are more
+expressed in tumors, while depressed regions (cool colors) represent
+down-regulated areas. The contour lines delineate boundaries between
+expression zones, analogous to elevation contours on a topographic
+map.</p>
+</div>
+<div class="section level4">
+<h4 id="comparing-multiple-conditions-batch-mode">Comparing multiple conditions (batch mode)<a class="anchor" aria-label="anchor" href="#comparing-multiple-conditions-batch-mode"></a>
+</h4>
+<p>The <code><a href="../reference/readExpColumn.html">readExpColumn()</a></code> function allows multiple comparisons
+to be processed in a single call:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">base</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span></span>
+<span>    <span class="st">"TumorCurrentSmoker-NormalNeverSmoker"</span>,</span>
+<span>    <span class="st">"TumorFormerSmoker-NormalFormerSmoker"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">template_expression</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="va">base</span>,</span>
+<span>    setcolor                <span class="op">=</span> <span class="st">"pink_green"</span>,</span>
+<span>    contourLevi             <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmprLVkEp/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
+<p><img src="levi_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="576"></p>
+<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmprLVkEp/TumorFormerSmoker-NormalFormerSmoker/levi.log</span></span></code></pre>
+<p><img src="levi_files/figure-html/unnamed-chunk-4-2.png" class="r-plt" alt="" width="576"></p>
+</div>
+<div class="section level4">
+<h4 id="signal-transformation-signal_mode">Signal transformation (<code>signal_mode</code>)<a class="anchor" aria-label="anchor" href="#signal-transformation-signal_mode"></a>
+</h4>
+<p>The <code>signal_mode</code> parameter controls how raw expression
+values are converted to the landscape score in
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>,</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">0, 1</annotation></semantics></math>.
+Choose based on your data type:</p>
+<table class="table">
+<colgroup>
+<col width="29%">
+<col width="23%">
+<col width="23%">
+<col width="23%">
+</colgroup>
+<thead><tr class="header">
+<th align="center"><code>signal_mode</code></th>
+<th align="left">Formula</th>
+<th align="left">Score 0.5 means</th>
+<th align="left">Best for</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="center">
+<code>"ratio"</code> (default)</td>
+<td align="left"><code>Test / (Test + Control)</code></td>
+<td align="left">Test ≈ Control</td>
+<td align="left">Raw counts, TPM, FPKM, linear proteomics LFQ</td>
+</tr>
+<tr class="even">
+<td align="center"><code>"logfc"</code></td>
+<td align="left"><code>1 / (1 + e^{−k · logFC})</code></td>
+<td align="left">logFC = 0 (no change)</td>
+<td align="left">RMA microarray, VST/rlog DESeq2, log2-proteomics,
+scRNA-seq avg_log2FC</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>"zscore"</code></td>
+<td align="left">
+<code>pnorm(z)</code> where
+<code>z = (logFC − μ) / σ</code>
+</td>
+<td align="left">Mean logFC of support points</td>
+<td align="left">Relative position within a comparison</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Quick guide by experiment type:</strong></p>
+<table class="table">
+<colgroup>
+<col width="22%">
+<col width="27%">
+<col width="27%">
+<col width="22%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Data type</th>
+<th align="center"><code>signal_mode</code></th>
+<th align="center"><code>expressionLog</code></th>
+<th align="left">Input columns</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Raw counts (RNA-seq)</td>
+<td align="center"><code>"ratio"</code></td>
+<td align="center"><code>FALSE</code></td>
+<td align="left">mean_test, mean_ctrl</td>
+</tr>
+<tr class="even">
+<td align="left">TPM / FPKM</td>
+<td align="center"><code>"ratio"</code></td>
+<td align="center"><code>FALSE</code></td>
+<td align="left">mean_test, mean_ctrl</td>
+</tr>
+<tr class="odd">
+<td align="left">Microarray RMA (log2)</td>
+<td align="center"><code>"logfc"</code></td>
+<td align="center"><code>FALSE</code></td>
+<td align="left">log2_test, log2_ctrl</td>
+</tr>
+<tr class="even">
+<td align="left">DESeq2 <code>log2FoldChange</code> only</td>
+<td align="center"><code>"logfc"</code></td>
+<td align="center"><code>FALSE</code></td>
+<td align="left"><code>readExpColumn("log2FoldChange-log2FoldChange")</code></td>
+</tr>
+<tr class="odd">
+<td align="left">edgeR / limma <code>logFC</code> only</td>
+<td align="center"><code>"logfc"</code></td>
+<td align="center"><code>FALSE</code></td>
+<td align="left"><code>readExpColumn("logFC-logFC")</code></td>
+</tr>
+<tr class="even">
+<td align="left">scRNA-seq <code>avg_log2FC</code>
+</td>
+<td align="center">
+<code>"logfc"</code> +
+<code>logfc_k = 0.5</code>
+</td>
+<td align="center"><code>FALSE</code></td>
+<td align="left"><code>readExpColumn("avg_log2FC-avg_log2FC")</code></td>
+</tr>
+<tr class="odd">
+<td align="left">scRNA-seq <code>pct.1</code> / <code>pct.2</code>
+</td>
+<td align="center"><code>"ratio"</code></td>
+<td align="center"><code>FALSE</code></td>
+<td align="left">pct.1, pct.2</td>
+</tr>
+<tr class="even">
+<td align="left">Proteomics log2 LFQ</td>
+<td align="center"><code>"logfc"</code></td>
+<td align="center"><code>FALSE</code></td>
+<td align="left">log2_LFQ_test, log2_LFQ_ctrl</td>
+</tr>
+<tr class="odd">
+<td align="left">Multi-condition / heterogeneous</td>
+<td align="center"><code>"zscore"</code></td>
+<td align="center">any</td>
+<td align="left">Test, Control</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>logfc_k</code> parameter controls the steepness of the
+sigmoid in <code>"logfc"</code> mode:</p>
+<ul>
+<li>
+<strong><code>k = 0.3–0.5</code></strong> — large fold-change
+datasets (scRNA-seq often reaches ±5)</li>
+<li>
+<strong><code>k = 1</code></strong> (default) — typical RNA-seq or
+proteomics (±2)</li>
+<li>
+<strong><code>k = 2–3</code></strong> — tight microarray
+fold-changes (±0.5–1)</li>
+</ul>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Microarray RMA — keep log2 scale, use logfc mode</span></span>
+<span><span class="va">res_rma</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">rma_expression_df</span>,   <span class="co"># columns: ID, Tumor_log2, Normal_log2</span></span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"Tumor_log2-Normal_log2"</span><span class="op">)</span>,</span>
+<span>    signal_mode             <span class="op">=</span> <span class="st">"logfc"</span>,</span>
+<span>    expressionLog           <span class="op">=</span> <span class="cn">FALSE</span>   <span class="co"># keep in log2 scale; no 2^ transform</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># scRNA-seq — single-column avg_log2FC with reduced steepness</span></span>
+<span><span class="va">res_sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">seurat_markers_df</span>,  <span class="co"># column: GeneID, avg_log2FC</span></span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"GeneID"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"avg_log2FC-avg_log2FC"</span><span class="op">)</span>,</span>
+<span>    signal_mode             <span class="op">=</span> <span class="st">"logfc"</span>,</span>
+<span>    logfc_k                 <span class="op">=</span> <span class="fl">0.5</span>     <span class="co"># softer gradient for large FC values</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># DESeq2 log2FoldChange as single column</span></span>
+<span><span class="va">res_deseq</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    expressionInput         <span class="op">=</span> <span class="fu"><a href="../reference/leviFromDESeq2.html">leviFromDESeq2</a></span><span class="op">(</span><span class="va">dds_result</span><span class="op">)</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"GeneID"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"log2FoldChange-log2FoldChange"</span><span class="op">)</span>,</span>
+<span>    signal_mode             <span class="op">=</span> <span class="st">"logfc"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The recipes above assume objects from your own analysis. The package
+ships a small log2-scale dataset so the <code>"logfc"</code> recipe can
+be run as it stands:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">logfc_net</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"logfc_network.dat"</span>, package <span class="op">=</span> <span class="st">"levi"</span><span class="op">)</span></span>
+<span><span class="va">logfc_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"logfc_expression.dat"</span>, package <span class="op">=</span> <span class="st">"levi"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Control is 8 for every gene and Test runs from 3 to 10, so the logFC</span></span>
+<span><span class="co"># spans -5 to +2 on the log2 scale.</span></span>
+<span><span class="va">res_logfc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">logfc_net</span>,</span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">logfc_expr</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"Test-Control"</span><span class="op">)</span>,</span>
+<span>    resolutionValueInput    <span class="op">=</span> <span class="fl">40</span>,</span>
+<span>    signal_mode             <span class="op">=</span> <span class="st">"logfc"</span>,</span>
+<span>    expressionLog           <span class="op">=</span> <span class="cn">FALSE</span>   <span class="co"># already log2; no back-transform</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="levi_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="480"></p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res_logfc</span><span class="op">$</span><span class="va">scores</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene"</span>, <span class="st">"LandscapeScore"</span>, <span class="st">"Rank"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<pre><code><span><span class="co">##   Gene LandscapeScore Rank</span></span>
+<span><span class="co">## 1   GF         0.8230    1</span></span>
+<span><span class="co">## 2   GE         0.3309    2</span></span>
+<span><span class="co">## 3   GD         0.1008    3</span></span>
+<span><span class="co">## 4   GC         0.0663    4</span></span>
+<span><span class="co">## 5   GB         0.0183    5</span></span>
+<span><span class="co">## 6   GA         0.0077    6</span></span></code></pre>
+<p>Only <code>GF</code> sits above the neutral 0.5, which is the single
+gene whose test value exceeds the control.</p>
+</div>
+<div class="section level4">
+<h4 id="two-color-palettes">Two-color palettes<a class="anchor" aria-label="anchor" href="#two-color-palettes"></a>
+</h4>
+<p>The <code>setcolor</code> parameter selects the color palette.
+Available options are:</p>
+<table class="table">
+<thead><tr class="header">
+<th align="center">Value</th>
+<th align="left">Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="center"><code>"default"</code></td>
+<td align="left">20-level multicolor (blue → red)</td>
+</tr>
+<tr class="even">
+<td align="center"><code>"purple_pink"</code></td>
+<td align="left">Two-color: purple → pink</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>"green_blue"</code></td>
+<td align="left">Two-color: green → blue</td>
+</tr>
+<tr class="even">
+<td align="center"><code>"blue_yellow"</code></td>
+<td align="left">Two-color: blue → yellow</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>"pink_green"</code></td>
+<td align="left">Two-color: pink → green</td>
+</tr>
+<tr class="even">
+<td align="center"><code>"orange_purple"</code></td>
+<td align="left">Two-color: orange → purple</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>"green_marine"</code></td>
+<td align="left">Two-color: green → marine</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="d-interactive-visualization">3D Interactive Visualization<a class="anchor" aria-label="anchor" href="#d-interactive-visualization"></a>
+</h2>
+<p>When the <code>plotly</code> package is installed,
+<strong>levi</strong> can generate an interactive 3D surface plot in
+addition to the standard 2D landscape. The user can rotate, zoom, and
+inspect expression values interactively.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"plotly"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">template_expression</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"TumorCurrentSmoker-NormalNeverSmoker"</span><span class="op">)</span>,</span>
+<span>    plot3d                  <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The 3D surface uses the same color palette as the 2D plot. Peaks in
+the landscape correspond to network sub-regions with high expression in
+the test condition; valleys correspond to down-regulated regions.</p>
+</div>
+<div class="section level2">
+<h2 id="importing-from-differential-expression-tools">Importing from Differential Expression Tools<a class="anchor" aria-label="anchor" href="#importing-from-differential-expression-tools"></a>
+</h2>
+<p><strong>levi</strong> accepts results directly from standard
+differential expression workflows: DESeq2 <span class="citation">(Love
+et al. 2014)</span>, edgeR <span class="citation">(Robinson et al.
+2010)</span>, limma <span class="citation">(Ritchie et al. 2015)</span>
+and Seurat <span class="citation">(Hao et al. 2021)</span>. This
+eliminates the need to manually prepare input files.</p>
+<div class="section level3">
+<h3 id="from-deseq2">From DESeq2<a class="anchor" aria-label="anchor" href="#from-deseq2"></a>
+</h3>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thelovelab/DESeq2" class="external-link">DESeq2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># After running DESeq2 analysis:</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/results.html" class="external-link">results</a></span><span class="op">(</span><span class="va">dds</span>, contrast <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"condition"</span>, <span class="st">"Tumor"</span>, <span class="st">"Normal"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">expr_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromDESeq2.html">leviFromDESeq2</a></span><span class="op">(</span><span class="va">res</span>, gene_col <span class="op">=</span> <span class="st">"GeneSymbol"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">expr_df</span>,</span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"GeneSymbol"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"log2FoldChange-log2FoldChange"</span><span class="op">)</span>,</span>
+<span>    signal_mode             <span class="op">=</span> <span class="st">"logfc"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="from-edger">From edgeR<a class="anchor" aria-label="anchor" href="#from-edger"></a>
+</h3>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioinf.wehi.edu.au/edgeR/" class="external-link">edgeR</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">fit</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/edgeR/man/glmQLFit.html" class="external-link">glmQLFit</a></span><span class="op">(</span><span class="va">dge</span>, <span class="va">design</span><span class="op">)</span></span>
+<span><span class="va">qlf</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/edgeR/man/glmQLFTest.html" class="external-link">glmQLFTest</a></span><span class="op">(</span><span class="va">fit</span>, coef <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">expr_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromEdgeR.html">leviFromEdgeR</a></span><span class="op">(</span><span class="va">qlf</span>, gene_col <span class="op">=</span> <span class="st">"GeneSymbol"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">expr_df</span>,</span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"GeneSymbol"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"logFC-logFC"</span><span class="op">)</span>,</span>
+<span>    signal_mode             <span class="op">=</span> <span class="st">"logfc"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="from-limma">From limma<a class="anchor" aria-label="anchor" href="#from-limma"></a>
+</h3>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioinf.wehi.edu.au/limma/" class="external-link">limma</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">fit2</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="va">expr_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromLimma.html">leviFromLimma</a></span><span class="op">(</span><span class="va">fit2</span>, coef <span class="op">=</span> <span class="fl">1</span>, gene_col <span class="op">=</span> <span class="st">"GeneSymbol"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">expr_df</span>,</span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"GeneSymbol"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"logFC-logFC"</span><span class="op">)</span>,</span>
+<span>    signal_mode             <span class="op">=</span> <span class="st">"logfc"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="checking-the-adapters-without-the-tools">Checking the adapters without the tools<a class="anchor" aria-label="anchor" href="#checking-the-adapters-without-the-tools"></a>
+</h3>
+<p>Each adapter also accepts a plain <code>data.frame</code> carrying
+the columns the corresponding tool produces. That makes the conversion
+reproducible here, and is handy for testing a pipeline before installing
+the full stack:</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># A DESeq2 results table has baseMean and log2FoldChange.</span></span>
+<span><span class="va">res_de</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    baseMean       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1200</span>, <span class="fl">1100</span>, <span class="fl">900</span><span class="op">)</span>,</span>
+<span>    log2FoldChange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.3</span>, <span class="fl">4.1</span>, <span class="op">-</span><span class="fl">5.3</span><span class="op">)</span>,</span>
+<span>    row.names      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HUB"</span>, <span class="st">"N1"</span>, <span class="st">"N5"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/leviFromDESeq2.html">leviFromDESeq2</a></span><span class="op">(</span><span class="va">res_de</span>, gene_col <span class="op">=</span> <span class="st">"GeneID"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   GeneID baseMean log2FoldChange</span></span>
+<span><span class="co">## 1    HUB     1200            4.3</span></span>
+<span><span class="co">## 2     N1     1100            4.1</span></span>
+<span><span class="co">## 3     N5      900           -5.3</span></span></code></pre>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># An edgeR topTags table has logFC and logCPM.</span></span>
+<span><span class="va">tt_edger</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    logFC     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.3</span>, <span class="op">-</span><span class="fl">5.1</span><span class="op">)</span>,</span>
+<span>    logCPM    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10.2</span>, <span class="fl">9.8</span><span class="op">)</span>,</span>
+<span>    row.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HUB"</span>, <span class="st">"N5"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/leviFromEdgeR.html">leviFromEdgeR</a></span><span class="op">(</span><span class="va">tt_edger</span>, gene_col <span class="op">=</span> <span class="st">"GeneID"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   GeneID logCPM logFC</span></span>
+<span><span class="co">## 1    HUB   10.2   4.3</span></span>
+<span><span class="co">## 2     N5    9.8  -5.1</span></span></code></pre>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># A limma topTable has logFC and AveExpr.</span></span>
+<span><span class="va">tt_limma</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    logFC     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.3</span>, <span class="op">-</span><span class="fl">5.1</span><span class="op">)</span>,</span>
+<span>    AveExpr   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">8.1</span>, <span class="fl">7.7</span><span class="op">)</span>,</span>
+<span>    row.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HUB"</span>, <span class="st">"N5"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/leviFromLimma.html">leviFromLimma</a></span><span class="op">(</span><span class="va">tt_limma</span>, gene_col <span class="op">=</span> <span class="st">"GeneID"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   GeneID AveExpr logFC</span></span>
+<span><span class="co">## 1    HUB     8.1   4.3</span></span>
+<span><span class="co">## 2     N5     7.7  -5.1</span></span></code></pre>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># A Seurat FindMarkers table has avg_log2FC and pct.2, which become</span></span>
+<span><span class="co"># Test and Control.</span></span>
+<span><span class="va">mk_seurat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    avg_log2FC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.5</span>, <span class="op">-</span><span class="fl">1.8</span><span class="op">)</span>,</span>
+<span>    pct.2      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.8</span><span class="op">)</span>,</span>
+<span>    row.names  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HUB"</span>, <span class="st">"N5"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/leviFromSeurat.html">leviFromSeurat</a></span><span class="op">(</span><span class="va">mk_seurat</span>, gene_col <span class="op">=</span> <span class="st">"GeneID"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   GeneID Control Test</span></span>
+<span><span class="co">## 1    HUB     0.3  2.5</span></span>
+<span><span class="co">## 2     N5     0.8 -1.8</span></span></code></pre>
+</div>
+</div>
+<div class="section level2">
+<h2 id="quantitative-analysis-of-the-landscape">Quantitative Analysis of the Landscape<a class="anchor" aria-label="anchor" href="#quantitative-analysis-of-the-landscape"></a>
+</h2>
+<div class="section level3">
+<h3 id="node-landscape-scores">Node landscape scores<a class="anchor" aria-label="anchor" href="#node-landscape-scores"></a>
+</h3>
+<p>Every <code><a href="../reference/levi.html">levi()</a></code> call returns a ranked table of landscape
+scores invisibly. A score close to 1 means the gene’s network
+neighborhood is strongly up-regulated in the test condition; close to 0
+means strongly down-regulated.</p>
+<p><strong>The network weights the landscape by degree.</strong> Each
+edge adds a support point at its midpoint carrying the mean of its two
+endpoints, so a hub with twenty interactions surrounds itself with
+twenty extra points while a leaf adds one. The smoothed surface around a
+hub is therefore dominated by the hub and its neighbours, and a
+moderately changed hub can look more prominent than a strongly changed
+peripheral gene. The permutation tests keep the network fixed, so this
+weighting is part of their null and does not bias the p-values; it does
+affect what the figure emphasises, and <code>result$scores</code> should
+be read with the node’s degree in mind.</p>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">template_expression</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"TumorCurrentSmoker-NormalNeverSmoker"</span><span class="op">)</span>,</span>
+<span>    contrastValueInput      <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>    resolutionValueInput    <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>    zoomValueInput          <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>    smoothValueInput        <span class="op">=</span> <span class="fl">5</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmprLVkEp/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
+<p><img src="levi_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="576"></p>
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Top 10 most altered genes in the network</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">scores</span>, <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##     Gene         X         Y LandscapeScore Rank</span></span>
+<span><span class="co">## 1  OGDHL 0.3323616 0.1683213         0.7768    1</span></span>
+<span><span class="co">## 2   IDH1 0.2850717 0.1341222         0.6944    2</span></span>
+<span><span class="co">## 3   IDH2 0.2352682 0.1331376         0.6678    3</span></span>
+<span><span class="co">## 4   DLAT 0.1228036 0.3618685         0.6486    4</span></span>
+<span><span class="co">## 5     FH 0.3917084 0.2269471         0.6327    5</span></span>
+<span><span class="co">## 6  PDHA2 0.3384309 0.2020927         0.6325    6</span></span>
+<span><span class="co">## 7   SDHC 0.2797636 0.4590206         0.6221    7</span></span>
+<span><span class="co">## 8   MDH1 0.3203979 0.2105595         0.5974    8</span></span>
+<span><span class="co">## 9  PDHA1 0.2585272 0.1312074         0.5960    9</span></span>
+<span><span class="co">## 10 IDH3A 0.2843243 0.3034554         0.5852   10</span></span></code></pre>
+<p>The <code>scores</code> table contains columns <code>Gene</code>,
+<code>X</code>, <code>Y</code>, <code>LandscapeScore</code> (0–1), and
+<code>Rank</code>. Genes with scores &gt; 0.7 are candidates for
+up-regulated hub regions; genes with scores &lt; 0.3 are down-regulated
+hubs.</p>
+</div>
+<div class="section level3">
+<h3 id="automatic-peak-detection">Automatic peak detection<a class="anchor" aria-label="anchor" href="#automatic-peak-detection"></a>
+</h3>
+<p>Peaks (local maxima) and valleys (local minima) are detected
+automatically and returned in <code>result$peaks</code>. Each row
+reports the nearest gene, the matrix position, and the landscape
+score.</p>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Detected peaks (up-regulated regions) and valleys (down-regulated)</span></span>
+<span><span class="va">result</span><span class="op">$</span><span class="va">peaks</span></span></code></pre></div>
+<pre><code><span><span class="co">##   Type NearestGene MatrixRow MatrixCol  Score</span></span>
+<span><span class="co">## 1 peak       OGDHL        48        16 0.7910</span></span>
+<span><span class="co">## 2 peak        MDH1        42        25 0.6726</span></span>
+<span><span class="co">## 3 peak          CS        23        30 0.6705</span></span></code></pre>
+</div>
+<div class="section level3">
+<h3 id="permutation-significance-test">Permutation significance test<a class="anchor" aria-label="anchor" href="#permutation-significance-test"></a>
+</h3>
+<p>To distinguish visually prominent features from statistical noise,
+use <code>n_perm</code> to run a permutation test. Measured expression
+values are randomly shuffled among network nodes, edge signals are
+recalculated and the landscape is rebuilt each time. The layout remains
+fixed.</p>
+<p>By default (<code>inference_unit = "region"</code>) the
+eight-connected regions beyond the neutral score are redetected in every
+permutation and each observed region is compared with the largest
+regional mass seen under the null <span class="citation">(Westfall and
+Young 1993; Nichols and Holmes 2002)</span>, over both directions.
+<code>result$regions$summary</code> gains <code>PSpatial</code> and
+<code>Significant</code>, and significant regions are outlined in white
+on the plot. The legacy <code>inference_unit = "cell"</code> tests every
+grid cell and draws contours from BY-adjusted p-values; it is what the
+graphical interface uses. The vignette <code>levi_inference</code>
+explains which null answers which question.</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">result_sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">template_expression</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"TumorCurrentSmoker-NormalNeverSmoker"</span><span class="op">)</span>,</span>
+<span>    n_perm    <span class="op">=</span> <span class="fl">100</span>,     <span class="co"># more permutations improve p-value resolution</span></span>
+<span>    sig_level <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>    perm_side <span class="op">=</span> <span class="st">"both"</span>   <span class="co"># "over", "under", or "both" (default)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## There are 1 nodes without expression value, see log in path: /tmp/RtmprLVkEp/TumorCurrentSmoker-NormalNeverSmoker/levi.log</span></span></code></pre>
+<pre><code><span><span class="co">## Permutation test: 100 iterations for 'TumorCurrentSmoker-NormalNeverSmoker'...</span></span></code></pre>
+<p><img src="levi_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="576"></p>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># One row per region, with its permutation p-value:</span></span>
+<span><span class="va">result_sig</span><span class="op">$</span><span class="va">regions</span><span class="op">$</span><span class="va">summary</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Region"</span>, <span class="st">"Direction"</span>, <span class="st">"Cells"</span>, <span class="st">"Mass"</span>,</span>
+<span>                               <span class="st">"PSpatial"</span>, <span class="st">"Significant"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<pre><code><span><span class="co">##    Region Direction Cells         Mass  PSpatial Significant</span></span>
+<span><span class="co">## 1 over_01      over  1137 0.0059606740 0.2574257       FALSE</span></span>
+<span><span class="co">## 2 over_03      over   288 0.0005096155 0.9405941       FALSE</span></span>
+<span><span class="co">## 3 over_02      over   107 0.0001561263 0.9702970       FALSE</span></span></code></pre>
+<p>With <code>inference_unit = "cell"</code>,
+<code>result$pvalues</code> holds the <code>$over</code> and
+<code>$under</code> adjusted p-value matrices instead, and the landscape
+overlays two contours:</p>
+<table class="table">
+<colgroup>
+<col width="31%">
+<col width="37%">
+<col width="31%">
+</colgroup>
+<thead><tr class="header">
+<th>Contour</th>
+<th>Line style</th>
+<th>Meaning</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>
+<strong>Dashed</strong> (white)</td>
+<td><code>perm_side = "over"</code></td>
+<td>Significantly <strong>over</strong>-expressed region (p_over &lt;
+0.05)</td>
+</tr>
+<tr class="even">
+<td>
+<strong>Dotted</strong> (white)</td>
+<td><code>perm_side = "under"</code></td>
+<td>Significantly <strong>under</strong>-expressed region (p_under &lt;
+0.05)</td>
+</tr>
+</tbody>
+</table>
+<p>Use <code>perm_side = "both"</code> (default) to show both
+simultaneously.</p>
+<p><strong>Interpretation:</strong> genes inside the dashed contour are
+strong candidates for up-regulated pathway hubs; genes inside the dotted
+contour are down-regulated hubs. Both boundaries are calibrated against
+a null distribution from random label shuffling, controlling for network
+topology effects.</p>
+</div>
+<div class="section level3">
+<h3 id="beyond-the-landscape-test-replication-and-graph-tfce">Beyond the landscape test: replication and graph TFCE<a class="anchor" aria-label="anchor" href="#beyond-the-landscape-test-replication-and-graph-tfce"></a>
+</h3>
+<p>The node-label p-value above is conditional on the network
+<em>and</em> on its layout. It asks whether the observed arrangement of
+the same values is unusually clustered, so it says nothing about
+replication, and a different drawing of the same graph is a different
+test. Two consequences matter in practice:</p>
+<ul>
+<li>
+<strong>When most of a network responds</strong> (an a-priori
+pathway under a stimulus that hits all of it, for instance), any
+shuffling of the values produces regions of similar mass and the
+node-label p-value approaches 1, even though the effect is real and
+strong. The test is answering a spatial question, not a biological
+one.</li>
+<li>
+<strong>The landscape depends on the layout</strong>. Force-directed
+layouts are stochastic, and regions detected on one drawing overlap only
+partly with those detected on another.</li>
+</ul>
+<p>When biological replicates are available, we recommend reporting the
+landscape together with two sample-label tests, which permute condition
+labels across replicates instead of values across nodes:</p>
+<ul>
+<li>
+<code><a href="../reference/leviReplicateInference.html">leviReplicateInference()</a></code> keeps the landscape and its
+regions but recomputes the fold-change from permuted labels, so
+<code>PSpatial</code> now answers whether the region replicates.</li>
+<li>
+<code><a href="../reference/leviGraphTFCEInference.html">leviGraphTFCEInference()</a></code> needs no layout at all. It
+fits a limma moderated t per gene <span class="citation">(Smyth
+2004)</span> and integrates it over every threshold with threshold-free
+cluster enhancement <span class="citation">(Smith and Nichols
+2009)</span> on the network components, controlling the family-wise
+error rate with the maximum over genes and directions. It is the more
+powerful of the two and is unaffected by the layout, so it is the
+natural confirmatory test for a region seen on the landscape.</li>
+</ul>
+<p>With four replicates per group the example below is small enough to
+enumerate all <code>choose(8, 4) = 70</code> label arrangements, so the
+smallest attainable p-value is 1/70.</p>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hub_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"hub_network.dat"</span>, package <span class="op">=</span> <span class="st">"levi"</span><span class="op">)</span></span>
+<span><span class="va">genes</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HUB"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"N"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Four control and four treated replicates on a log2 scale; the hub and its</span></span>
+<span><span class="co"># first two neighbours respond.</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span>
+<span><span class="va">expression</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">9</span> <span class="op">*</span> <span class="fl">8</span>, mean <span class="op">=</span> <span class="fl">6</span>, sd <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span>, <span class="fl">9</span>, <span class="fl">8</span>,</span>
+<span>                     dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">genes</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"s"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"control"</span>, <span class="st">"treated"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="va">expression</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HUB"</span>, <span class="st">"N1"</span>, <span class="st">"N2"</span><span class="op">)</span>, <span class="va">groups</span> <span class="op">==</span> <span class="st">"treated"</span><span class="op">]</span> <span class="op">&lt;-</span></span>
+<span>    <span class="va">expression</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HUB"</span>, <span class="st">"N1"</span>, <span class="st">"N2"</span><span class="op">)</span>, <span class="va">groups</span> <span class="op">==</span> <span class="st">"treated"</span><span class="op">]</span> <span class="op">+</span> <span class="fl">1.5</span></span>
+<span></span>
+<span><span class="co"># Landscape regions tested against biological replication</span></span>
+<span><span class="va">rep_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviReplicateInference.html">leviReplicateInference</a></span><span class="op">(</span></span>
+<span>    <span class="va">expression</span>, <span class="va">groups</span>, test <span class="op">=</span> <span class="st">"treated"</span>, control <span class="op">=</span> <span class="st">"control"</span>,</span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">hub_net</span>, fileTypeInput <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    resolutionValueInput <span class="op">=</span> <span class="fl">20</span>, smoothValueInput <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">rep_res</span><span class="op">$</span><span class="va">regions</span><span class="op">$</span><span class="va">summary</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Region"</span>, <span class="st">"Direction"</span>, <span class="st">"Mass"</span>, <span class="st">"PSpatial"</span>,</span>
+<span>                            <span class="st">"Significant"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<pre><code><span><span class="co">##    Region Direction        Mass   PSpatial Significant</span></span>
+<span><span class="co">## 1 over_03      over 0.033651593 0.02857143        TRUE</span></span>
+<span><span class="co">## 2 over_05      over 0.003513050 0.48571429       FALSE</span></span>
+<span><span class="co">## 3 over_04      over 0.002689098 0.48571429       FALSE</span></span>
+<span><span class="co">## 4 over_02      over 0.002476661 0.48571429       FALSE</span></span>
+<span><span class="co">## 5 over_01      over 0.002083346 0.48571429       FALSE</span></span></code></pre>
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Layout-free confirmation: graph TFCE with the same null</span></span>
+<span><span class="va">tfce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviGraphTFCEInference.html">leviGraphTFCEInference</a></span><span class="op">(</span></span>
+<span>    <span class="va">expression</span>, <span class="va">groups</span>, <span class="va">hub_net</span>, test <span class="op">=</span> <span class="st">"treated"</span>, control <span class="op">=</span> <span class="st">"control"</span>,</span>
+<span>    seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">tfce</span><span class="op">$</span><span class="va">statistic</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">tfce</span><span class="op">$</span><span class="va">statistic</span><span class="op">$</span><span class="va">PGlobal</span><span class="op">)</span>, <span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="op">]</span></span></code></pre></div>
+<pre><code><span><span class="co">##     Gene        T        TFCE      POver PUnder    PGlobal GlobalSignificant</span></span>
+<span><span class="co">## HUB  HUB 8.219189 264.0536523 0.01428571      1 0.01428571              TRUE</span></span>
+<span><span class="co">## N1    N1 6.796803 180.1085001 0.01428571      1 0.02857143              TRUE</span></span>
+<span><span class="co">## N2    N2 6.741273 180.1085001 0.01428571      1 0.02857143              TRUE</span></span>
+<span><span class="co">## N4    N4 1.009317   0.7337502 0.58571429      1 0.80000000             FALSE</span></span></code></pre>
+<p>Both tests find the hub and its two responding neighbours; the
+node-label test alone could not have told us that this replicates. For
+paired designs pass <code>blocks</code>; for single-cell data use the
+<code>leviSingleCell*</code> functions, which permute donors rather than
+cells. The vignette <code>levi_inference</code> explains the three nulls
+in detail and <code>levi_validation</code> reports their calibration and
+power.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="single-cell-rna-seq-seurat">Single-Cell RNA-seq (Seurat)<a class="anchor" aria-label="anchor" href="#single-cell-rna-seq-seurat"></a>
+</h2>
+<p><strong>levi</strong> can visualize single-cell marker genes from
+Seurat <span class="citation">(Hao et al. 2021)</span> on biological
+networks, enabling pathway-level interpretation of cell-type-specific
+expression.</p>
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Find markers for a specific cell cluster:</span></span>
+<span><span class="va">markers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/FindMarkers.html" class="external-link">FindMarkers</a></span><span class="op">(</span><span class="va">seurat_obj</span>,</span>
+<span>                       ident.1 <span class="op">=</span> <span class="st">"TumorCluster"</span>,</span>
+<span>                       ident.2 <span class="op">=</span> <span class="st">"NormalCluster"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">expr_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromSeurat.html">leviFromSeurat</a></span><span class="op">(</span><span class="va">markers</span>, gene_col <span class="op">=</span> <span class="st">"GeneSymbol"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">expr_df</span>,</span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">template_network</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"GeneSymbol"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"Test-Control"</span><span class="op">)</span>,</span>
+<span>    expressionLog           <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    plot3d                  <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="toy-datasets-for-testing-and-validation">Toy datasets for testing and validation<a class="anchor" aria-label="anchor" href="#toy-datasets-for-testing-and-validation"></a>
+</h2>
+<p><strong>levi</strong> ships several small toy datasets in
+<code>inst/extdata/</code> with known expected results, designed to
+validate specific features independently.</p>
+<div class="section level3">
+<h3 id="available-datasets">Available datasets<a class="anchor" aria-label="anchor" href="#available-datasets"></a>
+</h3>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Dataset pair</th>
+<th align="left">Topology</th>
+<th align="left">What it tests</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">
+<code>hub_network</code> +
+<code>hub_expression</code>
+</td>
+<td align="left">Star (9 nodes)</td>
+<td align="left">Score highest at hub; Gaussian smoothing
+propagation</td>
+</tr>
+<tr class="even">
+<td align="left">
+<code>gradient_network</code> +
+<code>gradient_expression</code>
+</td>
+<td align="left">Linear chain (6 nodes)</td>
+<td align="left">Strict monotone ordering of scores</td>
+</tr>
+<tr class="odd">
+<td align="left">
+<code>bimodal_network</code> +
+<code>bimodal_expression</code>
+</td>
+<td align="left">Two stars + bridge (13 nodes)</td>
+<td align="left">Simultaneous peak + valley; <code>leviDiff</code>
+</td>
+</tr>
+<tr class="even">
+<td align="left">
+<code>flat_network</code> +
+<code>flat_expression</code>
+</td>
+<td align="left">3×3 grid (9 nodes)</td>
+<td align="left">No false-positive peaks; uniform expression</td>
+</tr>
+<tr class="odd">
+<td align="left">
+<code>logfc_network</code> +
+<code>logfc_expression</code>
+</td>
+<td align="left">Linear chain, log2 intensities</td>
+<td align="left">
+<code>signal_mode = "logfc"</code> contrast
+improvement</td>
+</tr>
+<tr class="even">
+<td align="left"><code>hub_multicomp_expression</code></td>
+<td align="left">Reuses hub network</td>
+<td align="left">Batch mode; <code>leviGrid</code>;
+<code>leviDiff</code>
+</td>
+</tr>
+<tr class="odd">
+<td align="left">
+<code>sparse_network</code> +
+<code>sparse_expression</code>
+</td>
+<td align="left">Chain (15 nodes, 5 expressed)</td>
+<td align="left">NA handling; missing gene neutrality</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level3">
+<h3 id="bimodal-dataset">Bimodal dataset<a class="anchor" aria-label="anchor" href="#bimodal-dataset"></a>
+</h3>
+<p>Two distinct hubs (over-expressed cluster A and under-expressed
+cluster B) connected by a neutral bridge gene. The expected landscape
+shows a peak on the left and a valley on the right — ideal for
+validating <code>leviDiff</code>.</p>
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bimodal_net</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package<span class="op">=</span><span class="st">"levi"</span><span class="op">)</span>, <span class="st">"extdata"</span>,</span>
+<span>                           <span class="st">"bimodal_network.dat"</span><span class="op">)</span></span>
+<span><span class="va">bimodal_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package<span class="op">=</span><span class="st">"levi"</span><span class="op">)</span>, <span class="st">"extdata"</span>,</span>
+<span>                           <span class="st">"bimodal_expression.dat"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">res_bimodal</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">bimodal_net</span>,</span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">bimodal_expr</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"Test-Control"</span><span class="op">)</span>,</span>
+<span>    contrastValueInput      <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>    resolutionValueInput    <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>    zoomValueInput          <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>    smoothValueInput        <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>    contourLevi             <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Warning: `stat_contour()`: Zero contours were generated</span></span></code></pre>
+<pre><code><span><span class="co">## Warning in min(x): no non-missing arguments to min; returning Inf</span></span></code></pre>
+<pre><code><span><span class="co">## Warning in max(x): no non-missing arguments to max; returning -Inf</span></span></code></pre>
+<p><img src="levi_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="672"></p>
+</div>
+<div class="section level3">
+<h3 id="signal_mode-logfc-with-log2-microarray-intensities">signal_mode = “logfc” with log2 microarray intensities<a class="anchor" aria-label="anchor" href="#signal_mode-logfc-with-log2-microarray-intensities"></a>
+</h3>
+<p>The <code>logfc_expression</code> dataset simulates RMA-normalized
+microarray data (log2 intensities ranging 5–8), where
+<code>signal_mode = "logfc"</code> produces a wider score range than
+<code>signal_mode = "ratio"</code> because it captures the direction and
+magnitude of fold-change explicitly.</p>
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">logfc_net</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package<span class="op">=</span><span class="st">"levi"</span><span class="op">)</span>, <span class="st">"extdata"</span>,</span>
+<span>                         <span class="st">"logfc_network.dat"</span><span class="op">)</span></span>
+<span><span class="va">logfc_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package<span class="op">=</span><span class="st">"levi"</span><span class="op">)</span>, <span class="st">"extdata"</span>,</span>
+<span>                         <span class="st">"logfc_expression.dat"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">res_logfc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">logfc_net</span>,</span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">logfc_expr</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"Test-Control"</span><span class="op">)</span>,</span>
+<span>    signal_mode             <span class="op">=</span> <span class="st">"logfc"</span>,</span>
+<span>    contrastValueInput      <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>    resolutionValueInput    <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>    zoomValueInput          <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>    smoothValueInput        <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>    contourLevi             <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="levi_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="672"></p>
+<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Score range with logfc mode:"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diff.html" class="external-link">diff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">res_logfc</span><span class="op">$</span><span class="va">scores</span><span class="op">$</span><span class="va">LandscapeScore</span><span class="op">)</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Score range with logfc mode: 0.874</span></span></code></pre>
+</div>
+<div class="section level3">
+<h3 id="multi-comparison-batch-mode-and-levidiff">Multi-comparison (batch mode) and leviDiff<a class="anchor" aria-label="anchor" href="#multi-comparison-batch-mode-and-levidiff"></a>
+</h3>
+<p>The <code>hub_multicomp_expression</code> dataset has three
+conditions for the hub network. Using batch mode produces one landscape
+per comparison; <code><a href="../reference/leviDiff.html">leviDiff()</a></code> subtracts them cell-by-cell to
+reveal regional changes between conditions.</p>
+<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hub_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package<span class="op">=</span><span class="st">"levi"</span><span class="op">)</span>, <span class="st">"extdata"</span>, <span class="st">"hub_network.dat"</span><span class="op">)</span></span>
+<span><span class="va">mc_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span>package<span class="op">=</span><span class="st">"levi"</span><span class="op">)</span>, <span class="st">"extdata"</span>,</span>
+<span>                     <span class="st">"hub_multicomp_expression.dat"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Batch mode: two comparisons in one call</span></span>
+<span><span class="va">res_multi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput <span class="op">=</span> <span class="va">hub_net</span>,</span>
+<span>    expressionInput         <span class="op">=</span> <span class="va">mc_expr</span>,</span>
+<span>    fileTypeInput           <span class="op">=</span> <span class="st">"dat"</span>,</span>
+<span>    geneSymbolInput         <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>    readExpColumn           <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"Cond_A-Cond_B"</span>, <span class="st">"Cond_A-Cond_C"</span><span class="op">)</span>,</span>
+<span>    resolutionValueInput    <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>    smoothValueInput        <span class="op">=</span> <span class="fl">5</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Side-by-side</span></span>
+<span><span class="fu"><a href="../reference/leviGrid.html">leviGrid</a></span><span class="op">(</span><span class="va">res_multi</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Regional difference between conditions B and C</span></span>
+<span><span class="fu"><a href="../reference/leviDiff.html">leviDiff</a></span><span class="op">(</span><span class="va">res_multi</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">res_multi</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>         label_a <span class="op">=</span> <span class="st">"Cond_A vs Cond_B"</span>,</span>
+<span>         label_b <span class="op">=</span> <span class="st">"Cond_A vs Cond_C"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="levi_files/figure-html/batch_multi-1.png" class="r-plt" alt="" width="50%"><img src="levi_files/figure-html/batch_multi-2.png" class="r-plt" alt="" width="50%"><img src="levi_files/figure-html/batch_multi-3.png" class="r-plt" alt="" width="50%"><img src="levi_files/figure-html/batch_multi-4.png" class="r-plt" alt="" width="50%"></p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="real-datasets-from-bioconductor">Real datasets from Bioconductor<a class="anchor" aria-label="anchor" href="#real-datasets-from-bioconductor"></a>
+</h2>
+<p>The examples below use publicly available datasets to demonstrate
+<strong>levi</strong> across different experiment types.</p>
+<div class="section level3">
+<h3 id="rna-seq-airway-deseq2-string">RNA-seq: airway (DESeq2 + STRING)<a class="anchor" aria-label="anchor" href="#rna-seq-airway-deseq2-string"></a>
+</h3>
+<p>The <code>airway</code> dataset <span class="citation">(Himes et al.
+2014)</span> contains RNA-seq counts from airway smooth muscle cells
+treated with dexamethasone (DEX) vs untreated controls across 4 cell
+lines. DESeq2 identifies differentially expressed genes;
+<code><a href="../reference/leviFromSTRING.html">leviFromSTRING()</a></code> builds the interaction network
+automatically.</p>
+<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"airway"</span>, <span class="st">"DESeq2"</span>, <span class="st">"STRINGdb"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">airway</span><span class="op">)</span>; <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thelovelab/DESeq2" class="external-link">DESeq2</a></span><span class="op">)</span>; <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">airway</span><span class="op">)</span></span>
+<span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeqDataSet.html" class="external-link">DESeqDataSet</a></span><span class="op">(</span><span class="va">airway</span>, design <span class="op">=</span> <span class="op">~</span><span class="va">cell</span> <span class="op">+</span> <span class="va">dex</span><span class="op">)</span></span>
+<span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeq.html" class="external-link">DESeq</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/results.html" class="external-link">results</a></span><span class="op">(</span><span class="va">dds</span>, contrast <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dex"</span>, <span class="st">"trt"</span>, <span class="st">"untrt"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Convert to levi input</span></span>
+<span><span class="va">expr_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromDESeq2.html">leviFromDESeq2</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Top 80 DE genes — build STRING network</span></span>
+<span><span class="va">top80</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">expr_df</span><span class="op">$</span><span class="va">GeneID</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">expr_df</span><span class="op">$</span><span class="va">log2FoldChange</span><span class="op">)</span>,</span>
+<span>                                    decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">]</span>, <span class="fl">80</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromSTRING.html">leviFromSTRING</a></span><span class="op">(</span><span class="va">top80</span>, species <span class="op">=</span> <span class="fl">9606</span>, score_threshold <span class="op">=</span> <span class="fl">400</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Landscape: which network hubs respond to DEX treatment?</span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    expressionInput          <span class="op">=</span> <span class="va">expr_df</span>,</span>
+<span>    networkCoordinatesInput  <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">nodes</span>,</span>
+<span>    networkInteractionsInput <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">edges</span>,</span>
+<span>    fileTypeInput            <span class="op">=</span> <span class="st">"stg"</span>,</span>
+<span>    geneSymbolInput          <span class="op">=</span> <span class="st">"GeneID"</span>,</span>
+<span>    readExpColumn            <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"log2FoldChange-log2FoldChange"</span><span class="op">)</span>,</span>
+<span>    signal_mode              <span class="op">=</span> <span class="st">"logfc"</span>,</span>
+<span>    n_perm                   <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>    perm_side                <span class="op">=</span> <span class="st">"both"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="microarray-all-limma-string">Microarray: ALL (limma + STRING)<a class="anchor" aria-label="anchor" href="#microarray-all-limma-string"></a>
+</h3>
+<p>The <code>ALL</code> dataset <span class="citation">(Chiaretti et al.
+2004)</span> contains Affymetrix HG-U95Av2 microarray data from 128
+Acute Lymphoblastic Leukemia patients. RMA-normalized values are in log2
+scale, making <code>signal_mode = "logfc"</code> the natural choice.</p>
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ALL"</span>, <span class="st">"limma"</span>, <span class="st">"STRINGdb"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">ALL</span><span class="op">)</span>; <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioinf.wehi.edu.au/limma/" class="external-link">limma</a></span><span class="op">)</span>; <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">ALL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># B-cell vs T-cell subtypes</span></span>
+<span><span class="va">design</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix</a></span><span class="op">(</span><span class="op">~</span><span class="fl">0</span> <span class="op">+</span> <span class="va">ALL</span><span class="op">$</span><span class="va">BT</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">design</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"T"</span><span class="op">)</span></span>
+<span><span class="va">contrast</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/limma/man/makeContrasts.html" class="external-link">makeContrasts</a></span><span class="op">(</span><span class="va">B</span> <span class="op">-</span> <span class="cn">T</span>, levels <span class="op">=</span> <span class="va">design</span><span class="op">)</span></span>
+<span><span class="va">fit</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/limma/man/lmFit.html" class="external-link">lmFit</a></span><span class="op">(</span><span class="va">ALL</span>, <span class="va">design</span><span class="op">)</span></span>
+<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/limma/man/contrasts.fit.html" class="external-link">contrasts.fit</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">contrast</span><span class="op">)</span></span>
+<span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></span><span class="op">(</span><span class="va">fit2</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">expr_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromLimma.html">leviFromLimma</a></span><span class="op">(</span><span class="va">fit2</span>, coef <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">7</span><span class="op">)</span></span>
+<span><span class="va">net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromSTRING.html">leviFromSTRING</a></span><span class="op">(</span><span class="va">expr_df</span><span class="op">$</span><span class="va">GeneID</span>, species <span class="op">=</span> <span class="fl">9606</span>,</span>
+<span>                      score_threshold <span class="op">=</span> <span class="fl">700</span>,   <span class="co"># high confidence</span></span>
+<span>                      layout <span class="op">=</span> <span class="st">"kk"</span><span class="op">)</span>           <span class="co"># Kamada-Kawai for &lt;100 nodes</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    expressionInput          <span class="op">=</span> <span class="va">expr_df</span>,</span>
+<span>    networkCoordinatesInput  <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">nodes</span>,</span>
+<span>    networkInteractionsInput <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">edges</span>,</span>
+<span>    fileTypeInput            <span class="op">=</span> <span class="st">"stg"</span>,</span>
+<span>    geneSymbolInput          <span class="op">=</span> <span class="st">"GeneID"</span>,</span>
+<span>    readExpColumn            <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"logFC-logFC"</span><span class="op">)</span>,</span>
+<span>    signal_mode              <span class="op">=</span> <span class="st">"logfc"</span>,</span>
+<span>    logfc_k                  <span class="op">=</span> <span class="fl">2</span>        <span class="co"># tighter FC range in microarray</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="scrna-seq-pbmc-10x-seurat-string">scRNA-seq: PBMC 10x (Seurat + STRING)<a class="anchor" aria-label="anchor" href="#scrna-seq-pbmc-10x-seurat-string"></a>
+</h3>
+<p>Single-cell RNA-seq data from 3k PBMCs of a healthy donor <span class="citation">(<span class="nocase">10x Genomics</span> 2016)</span>.
+<code><a href="https://satijalab.org/seurat/reference/FindMarkers.html" class="external-link">FindMarkers()</a></code> computes <code>avg_log2FC</code> values per
+gene for a given cell type contrast, which are fed directly into levi
+using single-column logFC mode.</p>
+<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TENxPBMCData"</span>, <span class="st">"STRINGdb"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"Seurat"</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">TENxPBMCData</span><span class="op">)</span>; <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span>; <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">pbmc_sce</span> <span class="op">&lt;-</span> <span class="fu">TENxPBMCData</span><span class="op">(</span><span class="st">"pbmc3k"</span><span class="op">)</span></span>
+<span><span class="va">pbmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.github.io/seurat-object/reference/as.Seurat.html" class="external-link">as.Seurat</a></span><span class="op">(</span><span class="va">pbmc_sce</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Standard Seurat pipeline</span></span>
+<span><span class="va">pbmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/NormalizeData.html" class="external-link">NormalizeData</a></span><span class="op">(</span><span class="va">pbmc</span><span class="op">)</span></span>
+<span><span class="va">pbmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/FindVariableFeatures.html" class="external-link">FindVariableFeatures</a></span><span class="op">(</span><span class="va">pbmc</span><span class="op">)</span></span>
+<span><span class="va">pbmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/ScaleData.html" class="external-link">ScaleData</a></span><span class="op">(</span><span class="va">pbmc</span><span class="op">)</span></span>
+<span><span class="va">pbmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/RunPCA.html" class="external-link">RunPCA</a></span><span class="op">(</span><span class="va">pbmc</span><span class="op">)</span></span>
+<span><span class="va">pbmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/FindNeighbors.html" class="external-link">FindNeighbors</a></span><span class="op">(</span><span class="va">pbmc</span><span class="op">)</span></span>
+<span><span class="va">pbmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/FindClusters.html" class="external-link">FindClusters</a></span><span class="op">(</span><span class="va">pbmc</span>, resolution <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Markers between two clusters (e.g., T cells vs B cells after annotation)</span></span>
+<span><span class="va">markers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/FindMarkers.html" class="external-link">FindMarkers</a></span><span class="op">(</span><span class="va">pbmc</span>,</span>
+<span>    ident.1 <span class="op">=</span> <span class="st">"CD4 T cells"</span>,</span>
+<span>    ident.2 <span class="op">=</span> <span class="st">"B cells"</span>,</span>
+<span>    min.pct <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">expr_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromSeurat.html">leviFromSeurat</a></span><span class="op">(</span><span class="va">markers</span>, gene_col <span class="op">=</span> <span class="st">"row.names"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">21</span><span class="op">)</span></span>
+<span><span class="va">net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromSTRING.html">leviFromSTRING</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">markers</span><span class="op">)</span>, species <span class="op">=</span> <span class="fl">9606</span>,</span>
+<span>    score_threshold <span class="op">=</span> <span class="fl">400</span>,</span>
+<span>    layout <span class="op">=</span> <span class="st">"fr"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    expressionInput          <span class="op">=</span> <span class="va">expr_df</span>,</span>
+<span>    networkCoordinatesInput  <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">nodes</span>,</span>
+<span>    networkInteractionsInput <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">edges</span>,</span>
+<span>    fileTypeInput            <span class="op">=</span> <span class="st">"stg"</span>,</span>
+<span>    geneSymbolInput          <span class="op">=</span> <span class="st">"GeneID"</span>,</span>
+<span>    readExpColumn            <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"avg_log2FC-avg_log2FC"</span><span class="op">)</span>,</span>
+<span>    signal_mode              <span class="op">=</span> <span class="st">"logfc"</span>,</span>
+<span>    logfc_k                  <span class="op">=</span> <span class="fl">0.5</span>      <span class="co"># softer gradient for large FC values</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="building-networks-from-string">Building networks from STRING<a class="anchor" aria-label="anchor" href="#building-networks-from-string"></a>
+</h2>
+<p><strong>levi</strong> can retrieve a protein interaction network
+directly from the <a href="https://string-db.org" class="external-link">STRING database</a>
+<span class="citation">(Szklarczyk et al. 2021)</span> using the
+<code><a href="../reference/leviFromSTRING.html">leviFromSTRING()</a></code> function, which wraps the
+<code>STRINGdb</code> Bioconductor package. This eliminates the need to
+manually download and format network files.</p>
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"STRINGdb"</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Human MAPK pathway genes</span></span>
+<span><span class="va">mapk_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"EGFR"</span>, <span class="st">"KRAS"</span>, <span class="st">"BRAF"</span>, <span class="st">"MAP2K1"</span>, <span class="st">"MAPK1"</span>, <span class="st">"MAPK3"</span>,</span>
+<span>                <span class="st">"RPS6KA1"</span>, <span class="st">"MYC"</span>, <span class="st">"JUN"</span>, <span class="st">"FOS"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span>  <span class="co"># layout is stochastic; set seed for reproducibility</span></span>
+<span><span class="va">net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromSTRING.html">leviFromSTRING</a></span><span class="op">(</span></span>
+<span>    genes           <span class="op">=</span> <span class="va">mapk_genes</span>,</span>
+<span>    species         <span class="op">=</span> <span class="fl">9606</span>,         <span class="co"># 9606 = human</span></span>
+<span>    score_threshold <span class="op">=</span> <span class="fl">400</span>,          <span class="co"># medium confidence</span></span>
+<span>    layout          <span class="op">=</span> <span class="st">"fr"</span>          <span class="co"># Fruchterman-Reingold layout</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co"># net$nodes : data.frame — gene symbol, x, y</span></span>
+<span><span class="co"># net$edges : data.frame — V1, V2 (interacting pairs)</span></span>
+<span><span class="co"># net$graph : igraph object (for custom layouts / diagnostics)</span></span>
+<span></span>
+<span><span class="co"># Visualise with your expression data</span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    expressionInput          <span class="op">=</span> <span class="va">my_de_results</span>,</span>
+<span>    networkCoordinatesInput  <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">nodes</span>,</span>
+<span>    networkInteractionsInput <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">edges</span>,</span>
+<span>    fileTypeInput            <span class="op">=</span> <span class="st">"stg"</span>,</span>
+<span>    geneSymbolInput          <span class="op">=</span> <span class="st">"GeneID"</span>,</span>
+<span>    readExpColumn            <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"Tumor-Normal"</span><span class="op">)</span>,</span>
+<span>    signal_mode              <span class="op">=</span> <span class="st">"logfc"</span>,</span>
+<span>    n_perm                   <span class="op">=</span> <span class="fl">500</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="saving-and-reusing-a-downloaded-network">Saving and reusing a downloaded network<a class="anchor" aria-label="anchor" href="#saving-and-reusing-a-downloaded-network"></a>
+</h3>
+<p><code><a href="../reference/leviFromSTRING.html">leviFromSTRING()</a></code> returns a plain R list, so the network
+can be saved to disk and reloaded in future sessions — avoiding repeated
+downloads.</p>
+<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># --- Download once ---</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromSTRING.html">leviFromSTRING</a></span><span class="op">(</span><span class="va">mapk_genes</span>, species <span class="op">=</span> <span class="fl">9606</span>, score_threshold <span class="op">=</span> <span class="fl">400</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Option 1: save as TSV files — readable by levi() directly via file path</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.table</a></span><span class="op">(</span><span class="va">net</span><span class="op">$</span><span class="va">nodes</span>, <span class="st">"string_nodes.tsv"</span>,</span>
+<span>            sep <span class="op">=</span> <span class="st">"\t"</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span>, quote <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.table</a></span><span class="op">(</span><span class="va">net</span><span class="op">$</span><span class="va">edges</span>, <span class="st">"string_edges.tsv"</span>,</span>
+<span>            sep <span class="op">=</span> <span class="st">"\t"</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span>, quote <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Option 2: save the full R object (preserves igraph + coordinates)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS</a></span><span class="op">(</span><span class="va">net</span>, <span class="st">"string_network.rds"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># --- Reload in a later session ---</span></span>
+<span></span>
+<span><span class="co"># From TSV files (fileTypeInput = "stg" accepts file paths or data.frames)</span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput  <span class="op">=</span> <span class="st">"string_nodes.tsv"</span>,</span>
+<span>    networkInteractionsInput <span class="op">=</span> <span class="st">"string_edges.tsv"</span>,</span>
+<span>    fileTypeInput            <span class="op">=</span> <span class="st">"stg"</span>,</span>
+<span>    <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># From the RDS object</span></span>
+<span><span class="va">net</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"string_network.rds"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    networkCoordinatesInput  <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">nodes</span>,</span>
+<span>    networkInteractionsInput <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">edges</span>,</span>
+<span>    fileTypeInput            <span class="op">=</span> <span class="st">"stg"</span>,</span>
+<span>    <span class="va">...</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><strong>Tip — persistent STRINGdb cache:</strong> pass a fixed
+<code>input_directory</code> to <code><a href="../reference/leviFromSTRING.html">leviFromSTRING()</a></code> so the raw
+STRING files are stored locally and reused across sessions without
+re-downloading:</p>
+<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromSTRING.html">leviFromSTRING</a></span><span class="op">(</span></span>
+<span>    genes           <span class="op">=</span> <span class="va">my_genes</span>,</span>
+<span>    species         <span class="op">=</span> <span class="fl">9606</span>,</span>
+<span>    input_directory <span class="op">=</span> <span class="st">"~/.stringdb_cache"</span>   <span class="co"># persists between R sessions</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="layout-guide">Layout guide<a class="anchor" aria-label="anchor" href="#layout-guide"></a>
+</h3>
+<table class="table">
+<colgroup>
+<col width="38%">
+<col width="30%">
+<col width="30%">
+</colgroup>
+<thead><tr class="header">
+<th align="center"><code>layout</code></th>
+<th align="left">Algorithm</th>
+<th align="left">Best for</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="center"><code>"fr"</code></td>
+<td align="left">Fruchterman-Reingold <span class="citation">(Fruchterman and Reingold 1991)</span>
+</td>
+<td align="left">General use, 50–500 nodes</td>
+</tr>
+<tr class="even">
+<td align="center"><code>"kk"</code></td>
+<td align="left">Kamada-Kawai <span class="citation">(Kamada and Kawai
+1989)</span>
+</td>
+<td align="left">Small networks (≤ 100 nodes) — better aesthetics</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>"lgl"</code></td>
+<td align="left">Large Graph Layout</td>
+<td align="left">Large networks (&gt; 500 nodes)</td>
+</tr>
+<tr class="even">
+<td align="center"><code>"dh"</code></td>
+<td align="left">Davidson-Harel</td>
+<td align="left">High quality, slower</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>"circle"</code></td>
+<td align="left">Ring</td>
+<td align="left">Pathway-like linear chains</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level3">
+<h3 id="species-codes">Species codes<a class="anchor" aria-label="anchor" href="#species-codes"></a>
+</h3>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Organism</th>
+<th align="center"><code>species</code></th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Human (<em>H. sapiens</em>)</td>
+<td align="center"><code>9606</code></td>
+</tr>
+<tr class="even">
+<td align="left">Mouse (<em>M. musculus</em>)</td>
+<td align="center"><code>10090</code></td>
+</tr>
+<tr class="odd">
+<td align="left">Rat (<em>R. norvegicus</em>)</td>
+<td align="center"><code>10116</code></td>
+</tr>
+<tr class="even">
+<td align="left">Zebrafish (<em>D. rerio</em>)</td>
+<td align="center"><code>7955</code></td>
+</tr>
+<tr class="odd">
+<td align="left">Fly (<em>D. melanogaster</em>)</td>
+<td align="center"><code>7227</code></td>
+</tr>
+<tr class="even">
+<td align="left">Worm (<em>C. elegans</em>)</td>
+<td align="center"><code>6239</code></td>
+</tr>
+<tr class="odd">
+<td align="left">Yeast (<em>S. cerevisiae</em>)</td>
+<td align="center"><code>4932</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level3">
+<h3 id="full-pipeline-example-rna-seq-string">Full pipeline example (RNA-seq + STRING)<a class="anchor" aria-label="anchor" href="#full-pipeline-example-rna-seq-string"></a>
+</h3>
+<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">airway</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thelovelab/DESeq2" class="external-link">DESeq2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/levi" class="external-link">levi</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 1. Differential expression</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">airway</span><span class="op">)</span></span>
+<span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeqDataSet.html" class="external-link">DESeqDataSet</a></span><span class="op">(</span><span class="va">airway</span>, design <span class="op">=</span> <span class="op">~</span><span class="va">cell</span> <span class="op">+</span> <span class="va">dex</span><span class="op">)</span></span>
+<span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeq.html" class="external-link">DESeq</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/results.html" class="external-link">results</a></span><span class="op">(</span><span class="va">dds</span>, contrast <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dex"</span>, <span class="st">"trt"</span>, <span class="st">"untrt"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 2. Build expression data.frame</span></span>
+<span><span class="va">expr_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromDESeq2.html">leviFromDESeq2</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 3. Retrieve STRING network for top DE genes</span></span>
+<span><span class="va">top_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">expr_df</span><span class="op">$</span><span class="va">GeneID</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">expr_df</span><span class="op">$</span><span class="va">log2FoldChange</span><span class="op">)</span>,</span>
+<span>                                        decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">]</span>, <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/leviFromSTRING.html">leviFromSTRING</a></span><span class="op">(</span><span class="va">top_genes</span>, species <span class="op">=</span> <span class="fl">9606</span>, score_threshold <span class="op">=</span> <span class="fl">400</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 4. Visualise landscape</span></span>
+<span><span class="fu"><a href="../reference/levi.html">levi</a></span><span class="op">(</span></span>
+<span>    expressionInput          <span class="op">=</span> <span class="va">expr_df</span>,</span>
+<span>    networkCoordinatesInput  <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">nodes</span>,</span>
+<span>    networkInteractionsInput <span class="op">=</span> <span class="va">net</span><span class="op">$</span><span class="va">edges</span>,</span>
+<span>    fileTypeInput            <span class="op">=</span> <span class="st">"stg"</span>,</span>
+<span>    geneSymbolInput          <span class="op">=</span> <span class="st">"GeneID"</span>,</span>
+<span>    readExpColumn            <span class="op">=</span> <span class="fu"><a href="../reference/readExpColumn.html">readExpColumn</a></span><span class="op">(</span><span class="st">"log2FoldChange-log2FoldChange"</span><span class="op">)</span>,</span>
+<span>    signal_mode              <span class="op">=</span> <span class="st">"logfc"</span>,</span>
+<span>    n_perm                   <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>    perm_side                <span class="op">=</span> <span class="st">"both"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="session-information">Session Information<a class="anchor" aria-label="anchor" href="#session-information"></a>
+</h2>
+<pre><code><span><span class="co">## R version 4.6.1 (2026-06-24)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">## Running under: Ubuntu 24.04.2 LTS</span></span>
+<span><span class="co">## Running under: Ubuntu 24.04.4 LTS</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Matrix products: default</span></span>
 <span><span class="co">## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
 <span><span class="co">## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## locale:</span></span>
-<span><span class="co">##  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       </span></span>
-<span><span class="co">##  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   </span></span>
-<span><span class="co">##  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          </span></span>
-<span><span class="co">## [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   </span></span>
+<span><span class="co">##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              </span></span>
+<span><span class="co">##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    </span></span>
+<span><span class="co">##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   </span></span>
+<span><span class="co">##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 </span></span>
+<span><span class="co">##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span></span>
+<span><span class="co">## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       </span></span>
 <span><span class="co">## </span></span>
-<span><span class="co">## time zone: UTC</span></span>
+<span><span class="co">## time zone: Etc/UTC</span></span>
 <span><span class="co">## tzcode source: system (glibc)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## attached base packages:</span></span>
 <span><span class="co">## [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## other attached packages:</span></span>
-<span><span class="co">## [1] levi_1.20.0      BiocStyle_2.36.0</span></span>
+<span><span class="co">## [1] levi_1.99.0      BiocStyle_2.40.0</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## loaded via a namespace (and not attached):</span></span>
-<span><span class="co">##  [1] sass_0.4.10          generics_0.1.4       xml2_1.4.0          </span></span>
-<span><span class="co">##  [4] stringi_1.8.7        digest_0.6.37        magrittr_2.0.3      </span></span>
-<span><span class="co">##  [7] evaluate_1.0.4       grid_4.5.1           RColorBrewer_1.1-3  </span></span>
-<span><span class="co">## [10] bookdown_0.44        fastmap_1.2.0        plyr_1.8.9          </span></span>
-<span><span class="co">## [13] jsonlite_2.0.0       brio_1.1.5           promises_1.3.3      </span></span>
-<span><span class="co">## [16] BiocManager_1.30.26  httr_1.4.7           scales_1.4.0        </span></span>
-<span><span class="co">## [19] isoband_0.2.7        textshaping_1.0.1    jquerylib_0.1.4     </span></span>
-<span><span class="co">## [22] shinydashboard_0.7.3 cli_3.6.5            shiny_1.11.1        </span></span>
-<span><span class="co">## [25] rlang_1.1.6          withr_3.0.2          cachem_1.1.0        </span></span>
-<span><span class="co">## [28] yaml_2.3.10          tools_4.5.1          reshape2_1.4.4      </span></span>
-<span><span class="co">## [31] dplyr_1.1.4          colorspace_2.1-1     ggplot2_3.5.2       </span></span>
-<span><span class="co">## [34] httpuv_1.6.16        DT_0.33              mime_0.13           </span></span>
-<span><span class="co">## [37] vctrs_0.6.5          R6_2.6.1             lifecycle_1.0.4     </span></span>
-<span><span class="co">## [40] stringr_1.5.1        fs_1.6.6             htmlwidgets_1.6.4   </span></span>
-<span><span class="co">## [43] shinyjs_2.1.0        ragg_1.4.0           pkgconfig_2.0.3     </span></span>
-<span><span class="co">## [46] desc_1.4.3           pkgdown_2.1.3        pillar_1.11.0       </span></span>
-<span><span class="co">## [49] bslib_0.9.0          later_1.4.3          gtable_0.3.6        </span></span>
-<span><span class="co">## [52] glue_1.8.0           Rcpp_1.1.0           systemfonts_1.2.3   </span></span>
-<span><span class="co">## [55] xfun_0.53            tibble_3.3.0         tidyselect_1.2.1    </span></span>
-<span><span class="co">## [58] knitr_1.50           xtable_1.8-4         farver_2.1.2        </span></span>
-<span><span class="co">## [61] htmltools_0.5.8.1    igraph_2.1.4         labeling_0.4.3      </span></span>
-<span><span class="co">## [64] rmarkdown_2.29       testthat_3.2.3       compiler_4.5.1</span></span></code></pre>
+<span><span class="co">##  [1] SummarizedExperiment_1.42.0 gtable_0.3.6               </span></span>
+<span><span class="co">##  [3] xfun_0.61                   bslib_0.12.0               </span></span>
+<span><span class="co">##  [5] ggplot2_4.0.3               htmlwidgets_1.6.4          </span></span>
+<span><span class="co">##  [7] Biobase_2.72.0              lattice_0.23-1             </span></span>
+<span><span class="co">##  [9] vctrs_0.7.3                 tools_4.6.1                </span></span>
+<span><span class="co">## [11] generics_0.1.4              stats4_4.6.1               </span></span>
+<span><span class="co">## [13] parallel_4.6.1              tibble_3.3.1               </span></span>
+<span><span class="co">## [15] pkgconfig_2.0.3             Matrix_1.7-6               </span></span>
+<span><span class="co">## [17] RColorBrewer_1.1-3          S7_0.2.2                   </span></span>
+<span><span class="co">## [19] desc_1.4.3                  S4Vectors_0.50.3           </span></span>
+<span><span class="co">## [21] lifecycle_1.0.5             compiler_4.6.1             </span></span>
+<span><span class="co">## [23] farver_2.1.2                stringr_1.6.0              </span></span>
+<span><span class="co">## [25] textshaping_1.0.5           statmod_1.5.2              </span></span>
+<span><span class="co">## [27] Seqinfo_1.2.0               codetools_0.2-20           </span></span>
+<span><span class="co">## [29] htmltools_0.5.9             sass_0.4.10                </span></span>
+<span><span class="co">## [31] yaml_2.3.12                 pkgdown_2.2.1              </span></span>
+<span><span class="co">## [33] pillar_1.11.1               jquerylib_0.1.4            </span></span>
+<span><span class="co">## [35] BiocParallel_1.46.0         limma_3.68.5               </span></span>
+<span><span class="co">## [37] DelayedArray_0.38.2         cachem_1.1.0               </span></span>
+<span><span class="co">## [39] abind_1.4-8                 tidyselect_1.2.1           </span></span>
+<span><span class="co">## [41] digest_0.6.39               stringi_1.8.9              </span></span>
+<span><span class="co">## [43] dplyr_1.2.1                 reshape2_1.4.5             </span></span>
+<span><span class="co">## [45] bookdown_0.48               labeling_0.4.3             </span></span>
+<span><span class="co">## [47] fastmap_1.2.0               grid_4.6.1                 </span></span>
+<span><span class="co">## [49] cli_3.6.6                   SparseArray_1.12.2         </span></span>
+<span><span class="co">## [51] magrittr_2.0.5              patchwork_1.3.2            </span></span>
+<span><span class="co">## [53] S4Arrays_1.12.0             withr_3.0.3                </span></span>
+<span><span class="co">## [55] scales_1.4.0                rmarkdown_2.32             </span></span>
+<span><span class="co">## [57] XVector_0.52.0              matrixStats_1.5.0          </span></span>
+<span><span class="co">## [59] igraph_2.3.3                otel_0.2.0                 </span></span>
+<span><span class="co">## [61] ragg_1.5.2                  evaluate_1.0.5             </span></span>
+<span><span class="co">## [63] knitr_1.52                  GenomicRanges_1.64.0       </span></span>
+<span><span class="co">## [65] IRanges_2.46.0              rlang_1.3.0                </span></span>
+<span><span class="co">## [67] isoband_0.3.0               Rcpp_1.1.2                 </span></span>
+<span><span class="co">## [69] glue_1.8.1                  xml2_1.6.0                 </span></span>
+<span><span class="co">## [71] BiocManager_1.30.27         BiocGenerics_0.58.1        </span></span>
+<span><span class="co">## [73] jsonlite_2.0.0              R6_2.6.1                   </span></span>
+<span><span class="co">## [75] plyr_1.8.9                  MatrixGenerics_1.24.0      </span></span>
+<span><span class="co">## [77] systemfonts_1.3.2           fs_2.1.0</span></span></code></pre>
+<div class="section level3">
+<h3 id="signal-contracts-and-reproducibility">Signal contracts and reproducibility<a class="anchor" aria-label="anchor" href="#signal-contracts-and-reproducibility"></a>
+</h3>
+<p>Signal interpretation: <code>ratio</code> preserves Test/(Test +
+Control), with no min-max rescaling; equal nonzero inputs give 0.5.
+<code>expressionLog = TRUE</code> back-transforms log2 inputs only in
+this mode. A single ratio column means abundance/(abundance + 1), not a
+comparison with a control. <code>logfc</code> accepts two log-scale
+columns or one already computed logFC, mapping zero to 0.5.
+<code>zscore</code> centres on the mean logFC of measured network
+support points, not on biological absence of change. Missing
+measurements are assigned 0.5 and listed in
+<code>result$metadata</code>. Gaussian smoothing mixes neighbouring
+signals, so these baseline statements apply to the input signals and to
+uniformly neutral networks.</p>
+<p>Permutation inference is conditional on the fixed network and layout.
+Measured gene values are shuffled as pairs and edge midpoints are
+recalculated; missing positions stay fixed. In the default regional mode
+the maximum regional mass over both directions is the reference
+statistic, which controls the search across regions without a further
+adjustment. In cell mode both tails over occupied cells form one
+multiple-testing family per comparison, adjusted with
+<code>p_adjust_method</code> (“BY” by default);
+<code>result$raw_pvalues</code> retains the unadjusted values.
+<code>perm_side</code> selects the displayed side without changing
+either family. This is not a test of differential expression between
+biological replicates; increasing <code>n_perm</code> alone does not
+validate inferential use. Calibration across networks, layouts and
+missingness patterns still requires simulation studies.</p>
+<p>Call <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> before permutation runs.
+<code>result$metadata</code> records the RNG state, network,
+coordinates, signal mode, grid settings and software versions.
+<code><a href="../reference/leviDiff.html">leviDiff()</a></code> rejects incompatible metadata or grid
+coordinates. For DESeq2, edgeR and limma adapters, select the logFC
+column against itself with <code>signal_mode = "logfc"</code>; abundance
+annotations are not control measurements. For edgeR, select the contrast
+in <code><a href="https://rdrr.io/pkg/edgeR/man/glmLRT.html" class="external-link">glmLRT()</a></code> or <code><a href="https://rdrr.io/pkg/edgeR/man/glmQLFTest.html" class="external-link">glmQLFTest()</a></code> before calling
+<code><a href="../reference/leviFromEdgeR.html">leviFromEdgeR()</a></code> on the resulting test object. KEGG uses the
+supplied universe, converting both selected genes and background to
+ENTREZID with the same OrgDb.</p>
+</div>
 </div>
 <div class="section level2">
-<h2 class="unnumbered" id="reference">Reference<a class="anchor" aria-label="anchor" href="#reference"></a>
+<h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-TenX2016" class="csl-entry">
+<span class="nocase">10x Genomics</span>. 2016. <em>3k
+<span>PBMCs</span> from a Healthy Donor: Single Cell Gene Expression
+Dataset by Cell Ranger 1.1.0</em>. <a href="https://www.10xgenomics.com/datasets" class="external-link uri">Https://www.10xgenomics.com/datasets</a>.
+</div>
+<div id="ref-Batagelj1998" class="csl-entry">
+Batagelj, Vladimir, and Andrej Mrvar. 1998. <span>“Pajek – Program for
+Large Network Analysis.”</span> <em>Connections</em> 21 (2): 47–57.
+</div>
 <div id="ref-Camilo2013" class="csl-entry">
-Camilo, Esther, Luiz A Bovolenta, Marcio L Acencio, Jose L
-Rybarczyk-Filho, Mauro AA Castro, Jose CF Moreira, and Ney Lemke. 2013.
+Camilo, Esther, Luiz A Bovolenta, Marcio L Acencio, et al. 2013.
 <span>“GALANT: A Cytoscape Plugin for Visualizing Data as Functional
 Landscapes Projected onto Biological Networks.”</span>
 <em>Bioinformatics</em> 29 (19): 2505–6.
 </div>
+<div id="ref-Castro2012" class="csl-entry">
+Castro, Mauro A A, Xin Wang, Michael N C Fletcher, Kerstin B Meyer, and
+Florian Markowetz. 2012. <span>“<span>RedeR</span>:
+<span>R/Bioconductor</span> Package for Representing Modular Structures,
+Nested Networks and Multiple Levels of Hierarchical
+Associations.”</span> <em>Genome Biology</em> 13 (4): R29. <a href="https://doi.org/10.1186/gb-2012-13-4-r29" class="external-link">https://doi.org/10.1186/gb-2012-13-4-r29</a>.
+</div>
 <div id="ref-Castro2009" class="csl-entry">
-Castro, Mauro AA, José L Rybarczyk Filho, Rodrigo JS Dalmolin, Marialva
-Sinigaglia, José CF Moreira, José CM Mombach, and Rita MC de Almeida.
+Castro, Mauro AA, José L Rybarczyk Filho, Rodrigo JS Dalmolin, et al.
 2009. <span>“ViaComplex: Software for Landscape Analysis of Gene
 Expression Networks in Genomic Context.”</span> <em>Bioinformatics</em>
 25 (11): 1468–69.
+</div>
+<div id="ref-Chiaretti2004" class="csl-entry">
+Chiaretti, Sabina, Xiaochun Li, Robert Gentleman, et al. 2004.
+<span>“Gene Expression Profile of Adult <span class="nocase">T-cell</span> Acute Lymphocytic Leukemia Identifies
+Distinct Subsets of Patients with Different Response to Therapy and
+Survival.”</span> <em>Blood</em> 103 (7): 2771–78. <a href="https://doi.org/10.1182/blood-2003-09-3243" class="external-link">https://doi.org/10.1182/blood-2003-09-3243</a>.
+</div>
+<div id="ref-Csardi2006" class="csl-entry">
+Csárdi, Gábor, and Tamás Nepusz. 2006. <span>“The Igraph Software
+Package for Complex Network Research.”</span> <em>InterJournal</em>
+Complex Systems: 1695.
+</div>
+<div id="ref-Fruchterman1991" class="csl-entry">
+Fruchterman, Thomas M J, and Edward M Reingold. 1991. <span>“Graph
+Drawing by Force-Directed Placement.”</span> <em>Software: Practice and
+Experience</em> 21 (11): 1129–64. <a href="https://doi.org/10.1002/spe.4380211102" class="external-link">https://doi.org/10.1002/spe.4380211102</a>.
+</div>
+<div id="ref-Hao2021" class="csl-entry">
+Hao, Yuhan, Stephanie Hao, Erica Andersen-Nissen, et al. 2021.
+<span>“Integrated Analysis of Multimodal Single-Cell Data.”</span>
+<em>Cell</em> 184 (13): 3573–87. <a href="https://doi.org/10.1016/j.cell.2021.04.048" class="external-link">https://doi.org/10.1016/j.cell.2021.04.048</a>.
+</div>
+<div id="ref-Himes2014" class="csl-entry">
+Himes, Blanca E, Xiaofeng Jiang, Peter Wagner, et al. 2014.
+<span>“<span>RNA-Seq</span> Transcriptome Profiling Identifies
+<span>CRISPLD2</span> as a Glucocorticoid Responsive Gene That Modulates
+Cytokine Function in Airway Smooth Muscle Cells.”</span> <em>PLoS
+ONE</em> 9 (6): e99625. <a href="https://doi.org/10.1371/journal.pone.0099625" class="external-link">https://doi.org/10.1371/journal.pone.0099625</a>.
+</div>
+<div id="ref-Hooper2005" class="csl-entry">
+Hooper, Sean D, and Peer Bork. 2005. <span>“Medusa: A Simple Tool for
+Interaction Graph Analysis.”</span> <em>Bioinformatics</em> 21 (24):
+4432–33. <a href="https://doi.org/10.1093/bioinformatics/bti696" class="external-link">https://doi.org/10.1093/bioinformatics/bti696</a>.
+</div>
+<div id="ref-Kamada1989" class="csl-entry">
+Kamada, Tomihisa, and Satoru Kawai. 1989. <span>“An Algorithm for
+Drawing General Undirected Graphs.”</span> <em>Information Processing
+Letters</em> 31 (1): 7–15. <a href="https://doi.org/10.1016/0020-0190(89)90102-6" class="external-link">https://doi.org/10.1016/0020-0190(89)90102-6</a>.
+</div>
+<div id="ref-Landi2008" class="csl-entry">
+Landi, Maria Teresa, Tatiana Dracheva, Melissa Rotunno, et al. 2008.
+<span>“Gene Expression Signature of Cigarette Smoking and Its Role in
+Lung Adenocarcinoma Development and Survival.”</span> <em>PLoS ONE</em>
+3 (2): e1651. <a href="https://doi.org/10.1371/journal.pone.0001651" class="external-link">https://doi.org/10.1371/journal.pone.0001651</a>.
+</div>
+<div id="ref-Love2014" class="csl-entry">
+Love, Michael I, Wolfgang Huber, and Simon Anders. 2014.
+<span>“Moderated Estimation of Fold Change and Dispersion for <span class="nocase">RNA-seq</span> Data with <span>DESeq2</span>.”</span>
+<em>Genome Biology</em> 15 (12): 550. <a href="https://doi.org/10.1186/s13059-014-0550-8" class="external-link">https://doi.org/10.1186/s13059-014-0550-8</a>.
+</div>
+<div id="ref-Nichols2002" class="csl-entry">
+Nichols, Thomas E, and Andrew P Holmes. 2002. <span>“Nonparametric
+Permutation Tests for Functional Neuroimaging: A Primer with
+Examples.”</span> <em>Human Brain Mapping</em> 15 (1): 1–25. <a href="https://doi.org/10.1002/hbm.1058" class="external-link">https://doi.org/10.1002/hbm.1058</a>.
+</div>
+<div id="ref-Ritchie2015" class="csl-entry">
+Ritchie, Matthew E, Belinda Phipson, Di Wu, et al. 2015. <span>“Limma
+Powers Differential Expression Analyses for <span class="nocase">RNA-sequencing</span> and Microarray Studies.”</span>
+<em>Nucleic Acids Research</em> 43 (7): e47. <a href="https://doi.org/10.1093/nar/gkv007" class="external-link">https://doi.org/10.1093/nar/gkv007</a>.
+</div>
+<div id="ref-Robinson2010" class="csl-entry">
+Robinson, Mark D, Davis J McCarthy, and Gordon K Smyth. 2010.
+<span>“<span class="nocase">edgeR</span>: A <span>Bioconductor</span>
+Package for Differential Expression Analysis of Digital Gene Expression
+Data.”</span> <em>Bioinformatics</em> 26 (1): 139–40. <a href="https://doi.org/10.1093/bioinformatics/btp616" class="external-link">https://doi.org/10.1093/bioinformatics/btp616</a>.
+</div>
+<div id="ref-Smith2009" class="csl-entry">
+Smith, Stephen M, and Thomas E Nichols. 2009. <span>“Threshold-Free
+Cluster Enhancement: Addressing Problems of Smoothing, Threshold
+Dependence and Localisation in Cluster Inference.”</span>
+<em>NeuroImage</em> 44 (1): 83–98. <a href="https://doi.org/10.1016/j.neuroimage.2008.03.061" class="external-link">https://doi.org/10.1016/j.neuroimage.2008.03.061</a>.
+</div>
+<div id="ref-Smyth2004" class="csl-entry">
+Smyth, Gordon K. 2004. <span>“Linear Models and Empirical
+<span>Bayes</span> Methods for Assessing Differential Expression in
+Microarray Experiments.”</span> <em>Statistical Applications in Genetics
+and Molecular Biology</em> 3 (1): Article 3. <a href="https://doi.org/10.2202/1544-6115.1027" class="external-link">https://doi.org/10.2202/1544-6115.1027</a>.
+</div>
+<div id="ref-Szklarczyk2021" class="csl-entry">
+Szklarczyk, Damian, Annika L Gable, Katerina C Nastou, et al. 2021.
+<span>“The <span>STRING</span> Database in 2021: Customizable
+Protein-Protein Networks, and Functional Characterization of
+User-Uploaded Gene/Measurement Sets.”</span> <em>Nucleic Acids
+Research</em> 49 (D1): D605–12. <a href="https://doi.org/10.1093/nar/gkaa1074" class="external-link">https://doi.org/10.1093/nar/gkaa1074</a>.
+</div>
+<div id="ref-Westfall1993" class="csl-entry">
+Westfall, Peter H, and S Stanley Young. 1993. <em>Resampling-Based
+Multiple Testing: Examples and Methods for p-Value Adjustment</em>.
+Wiley.
 </div>
 </div>
 </div>
@@ -467,7 +1874,7 @@ Expression Networks in Genomic Context.”</span> <em>Bioinformatics</em>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>
