@@ -48,9 +48,27 @@ jobs:
           R CMD check --no-manual --timings "$tarball"
 
       - name: BiocCheck
+        # The bioc-devel subscription and support-site checks query external
+        # services (the first needs an admin password) and fail at random on a
+        # runner, so those two errors are reported but do not fail the job.
         run: |
           tarball=$(ls -1t levi_*.tar.gz | head -n 1)
-          Rscript -e 'BiocCheck::BiocCheck(commandArgs(TRUE)[1], `quit-with-status` = TRUE, `no-check-bioc-views` = FALSE)' "$tarball"
+          Rscript - "$tarball" <<'RSCRIPT'
+          tarball <- commandArgs(TRUE)[1]
+          res <- BiocCheck::BiocCheck(tarball, `quit-with-status` = FALSE)
+          errs <- unlist(lapply(res$error, function(e) paste(e, collapse = " ")))
+          external <- grepl("bioc-devel|Support Site|support site", errs, ignore.case = TRUE)
+          if (any(external)) {
+            cat("\nIgnored (external service checks):\n")
+            cat(paste(" -", errs[external]), sep = "\n")
+          }
+          if (any(!external)) {
+            cat("\nBiocCheck ERRORS:\n")
+            cat(paste(" -", errs[!external]), sep = "\n")
+            quit(status = 1)
+          }
+          cat("\nBiocCheck: no blocking errors.\n")
+          RSCRIPT
 
       - name: Examples slower than 5 s
         if: always()
