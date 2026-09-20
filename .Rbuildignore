@@ -14,3 +14,4 @@
 ^\.gitignore$
 ^_pkgdown\.yml$
 ^docs$
+^RELEASING\.md$
