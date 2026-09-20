@@ -1,5 +1,6 @@
 # Builds the pkgdown site (reference and vignettes) on the Bioconductor devel
-# image and publishes it to the gh-pages branch on pushes to master.
+# image, then publishes it to the gh-pages branch from a plain runner: the
+# deploy action does not run reliably inside the container.
 name: pkgdown
 
 on:
@@ -14,15 +15,13 @@ on:
 permissions: read-all
 
 jobs:
-  pkgdown:
+  build:
     runs-on: ubuntu-latest
     container: bioconductor/bioconductor_docker:devel
     concurrency:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -36,8 +35,27 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pkgdown-site
+          path: docs
+          retention-days: 1
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: pkgdown-site
+          path: docs
+
       - name: Deploy to GitHub pages
-        if: github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           clean: false
